@@ -1475,7 +1475,45 @@
       modelo:  car.modelo,
       ano:     car.ano,
     }]);
-    if (error) console.error('[PrevCar] Supabase error:', error);
+    if (error) console.error('[PrevCar] Supabase vehicles error:', error);
+  }
+
+  function getPlaca() {
+    return getCar()?.placa ?? null;
+  }
+
+  async function insertMaintenanceToSupabase(record) {
+    const placa = getPlaca();
+    if (!placa) return;
+    const { error } = await supabase.from('manutencoes').insert([{
+      id:          record.id,
+      placa,
+      tipo:        record.type,
+      descricao:   record.description || null,
+      data:        record.date,
+      quilometragem: record.mileage,
+      custo:       record.cost ?? null,
+      local:       record.location || null,
+      criado_em:   record.addedAt,
+    }]);
+    if (error) console.error('[PrevCar] Supabase manutencoes insert error:', error);
+  }
+
+  async function updateMaintenanceInSupabase(id, changes) {
+    const { error } = await supabase.from('manutencoes').update({
+      tipo:          changes.type,
+      descricao:     changes.description || null,
+      data:          changes.date,
+      quilometragem: changes.mileage,
+      custo:         changes.cost ?? null,
+      local:         changes.location || null,
+    }).eq('id', id);
+    if (error) console.error('[PrevCar] Supabase manutencoes update error:', error);
+  }
+
+  async function deleteMaintenanceFromSupabase(id) {
+    const { error } = await supabase.from('manutencoes').delete().eq('id', id);
+    if (error) console.error('[PrevCar] Supabase manutencoes delete error:', error);
   }
 
   async function fetchCarData(marca, modelo, ano) {
@@ -1871,11 +1909,13 @@ Responda APENAS com o JSON puro, sem markdown, sem explicações.`;
     if (idx === -1) return;
     const [deleted] = recs.splice(idx, 1);
     saveRecords(recs);
+    deleteMaintenanceFromSupabase(id);
     render();
     toast('Registro excluído', 4000, () => {
       const current = getRecords();
       current.splice(Math.min(idx, current.length), 0, deleted);
       saveRecords(current);
+      insertMaintenanceToSupabase(deleted);
       render();
     });
   }
@@ -2023,17 +2063,20 @@ Responda APENAS com o JSON puro, sem markdown, sem explicações.`;
 
     if (editingRecordId) {
       updateRecord(editingRecordId, data);
+      updateMaintenanceInSupabase(editingRecordId, data);
       e.target.reset();
       setToday();
       closeSheet();
       render();
       toast('✓  Registro atualizado');
     } else {
-      pushRecord({
+      const record = {
         id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
         ...data,
         addedAt: new Date().toISOString(),
-      });
+      };
+      pushRecord(record);
+      insertMaintenanceToSupabase(record);
       e.target.reset();
       setToday();
       closeSheet();
