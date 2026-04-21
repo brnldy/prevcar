@@ -486,6 +486,25 @@
     .prediction-card[data-status="soon"]    .prediction-value { color: var(--warning); }
     .prediction-card[data-status="ok"]      .prediction-value { color: var(--success); }
 
+    .prediction-field {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .prediction-field-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: var(--text-tertiary);
+    }
+
+    .prediction-value--secondary {
+      font-size: 1.25rem !important;
+      opacity: 0.75;
+    }
+
     .prediction-sub {
       font-size: var(--text-xs);
       color: var(--text-tertiary);
@@ -551,7 +570,7 @@
     }
 
     /* ================================
-       RECORD ITEMS — with index number
+       RECORD ITEMS
        ================================ */
     #timeline { counter-reset: record-counter; }
 
@@ -559,7 +578,7 @@
       padding: var(--sp-6) var(--sp-4);
       border-bottom: 1px solid var(--border-subtle);
       display: grid;
-      grid-template-columns: 40px 1fr;
+      grid-template-columns: 36px 1fr;
       gap: 0 var(--sp-3);
       animation: record-in 350ms var(--ease-out-expo) both;
       animation-delay: min(calc(var(--idx, 0) * 45ms), 180ms);
@@ -568,15 +587,14 @@
 
     .record-item:last-child { border-bottom: none; }
 
-    /* Running number column */
     .record-item::before {
       content: counter(record-counter, decimal-leading-zero);
       font-family: var(--font-mono);
-      font-size: var(--text-sm);
+      font-size: var(--text-xs);
       font-weight: 600;
       color: var(--accent);
-      opacity: 0.45;
-      padding-top: 4px;
+      opacity: 0.5;
+      padding-top: 3px;
       font-variant-numeric: tabular-nums;
       letter-spacing: 0.02em;
     }
@@ -584,7 +602,7 @@
     .record-body {
       display: flex;
       flex-direction: column;
-      gap: var(--sp-3);
+      gap: var(--sp-4);
     }
 
     @keyframes record-in {
@@ -592,73 +610,64 @@
       to   { opacity: 1; transform: translateY(0); }
     }
 
-    .record-top {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: var(--sp-3);
-    }
-
     .record-service {
       font-size: var(--text-lg);
       font-weight: 700;
       line-height: 1.2;
       letter-spacing: -0.02em;
+      padding-bottom: var(--sp-3);
+      border-bottom: 1px solid var(--border-subtle);
     }
 
-    .record-location {
-      font-size: var(--text-xs);
-      color: var(--text-tertiary);
-      flex-shrink: 0;
-      max-width: 44%;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      text-align: right;
-      padding-top: 3px;
+    .record-fields {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--sp-4) var(--sp-4);
     }
 
-    .record-description {
-      font-size: var(--text-sm);
-      color: var(--text-secondary);
-      font-weight: 300;
-      line-height: 1.4;
-    }
-
-    .record-meta {
+    .record-field {
       display: flex;
-      align-items: center;
-      gap: var(--sp-4);
+      flex-direction: column;
+      gap: 3px;
     }
 
-    .record-date {
-      font-size: var(--text-sm);
+    .record-field.full { grid-column: 1 / -1; }
+
+    .record-field-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
       color: var(--text-tertiary);
-      font-family: var(--font-mono);
-      font-variant-numeric: tabular-nums;
     }
 
-    .record-mileage {
+    .record-field-value {
+      font-size: var(--text-sm);
+      color: var(--text-primary);
+      line-height: 1.3;
+    }
+
+    .record-field-value.mono {
       font-family: var(--font-mono);
       font-size: var(--text-base);
       font-weight: 500;
-      color: var(--text-primary);
       font-variant-numeric: tabular-nums;
+      letter-spacing: -0.01em;
     }
 
-    .record-cost {
+    .record-field-value.accent {
       font-family: var(--font-mono);
-      font-size: var(--text-sm);
+      font-size: var(--text-base);
       font-weight: 600;
-      color: var(--accent);
       font-variant-numeric: tabular-nums;
-      margin-left: auto;
+      color: var(--accent);
     }
 
     .record-actions {
       display: flex;
       gap: var(--sp-4);
-      padding-top: var(--sp-1);
+      padding-top: var(--sp-2);
+      border-top: 1px solid var(--border-subtle);
     }
 
     .btn-record-action {
@@ -1692,23 +1701,11 @@ Importante: "days" representa DIAS (ex: troca de óleo a cada 365 dias = 1 ano).
         status = 'soon';
       }
 
-      // Choose which absolute milestone to display:
-      // when both exist, pick the one that fires first (proportionally closer to its interval)
-      let value = '', sub = '';
-      const showKm = kmDue != null && (
-        dateDue == null ||
-        (interval.km && interval.days && (kmLeft / interval.km) <= (daysLeft / interval.days))
-      );
+      const kmValue   = kmDue   != null ? fmtKm(kmDue)         : null;
+      const dateValue = dateDue != null ? fmtMonthYear(dateDue) : null;
+      const overdue   = status === 'overdue';
 
-      if (showKm) {
-        value = 'aos ' + fmtKm(kmDue);
-      } else if (dateDue != null) {
-        value = fmtMonthYear(dateDue);
-      }
-
-      sub = status === 'overdue' ? 'vencido' : 'vencimento';
-
-      out.push({ type, label: SERVICE_LABELS[type] || type, status, value, sub });
+      out.push({ type, label: SERVICE_LABELS[type] || type, status, kmValue, dateValue, overdue });
     }
 
     const priority = { overdue: 0, soon: 1, ok: 2 };
@@ -1754,8 +1751,17 @@ Importante: "days" representa DIAS (ex: troca de óleo a cada 365 dias = 1 ano).
           <div class="prediction-dot" aria-hidden="true"></div>
           <div class="prediction-name">${p.label}</div>
         </div>
-        <div class="prediction-value">${p.value}</div>
-        <div class="prediction-sub">${p.sub}</div>
+        ${p.kmValue ? `
+          <div class="prediction-field">
+            <div class="prediction-field-label">Quilometragem</div>
+            <div class="prediction-value">${p.kmValue}</div>
+          </div>` : ''}
+        ${p.dateValue ? `
+          <div class="prediction-field">
+            <div class="prediction-field-label">Prazo</div>
+            <div class="prediction-value ${p.kmValue ? 'prediction-value--secondary' : ''}">${p.dateValue}</div>
+          </div>` : ''}
+        <div class="prediction-sub">${p.overdue ? 'vencido' : 'vencimento'}</div>
       `;
       scroll.appendChild(card);
     });
@@ -1789,25 +1795,35 @@ Importante: "days" representa DIAS (ex: troca de óleo a cada 365 dias = 1 ano).
 
       item.innerHTML = `
         <div class="record-body">
-          <div class="record-top">
-            <span class="record-service">${label}</span>
-            ${r.location ? `<span class="record-location" title="${r.location}">${r.location}</span>` : ''}
-          </div>
-          ${r.description ? `<div class="record-description">${r.description}</div>` : ''}
-          <div class="record-meta">
-            <span class="record-date">${fmtDate(r.date)}</span>
-            <span class="record-mileage">${fmtKm(r.mileage)}</span>
-            ${r.cost ? `<span class="record-cost">${fmtCost(r.cost)}</span>` : ''}
+          <div class="record-service">${label}</div>
+          <div class="record-fields">
+            <div class="record-field">
+              <span class="record-field-label">Data</span>
+              <span class="record-field-value mono">${fmtDate(r.date)}</span>
+            </div>
+            <div class="record-field">
+              <span class="record-field-label">Quilometragem</span>
+              <span class="record-field-value mono">${fmtKm(r.mileage)}</span>
+            </div>
+            ${r.cost != null ? `
+            <div class="record-field">
+              <span class="record-field-label">Custo</span>
+              <span class="record-field-value accent">${fmtCost(r.cost)}</span>
+            </div>` : ''}
+            ${r.location ? `
+            <div class="record-field">
+              <span class="record-field-label">Local</span>
+              <span class="record-field-value">${r.location}</span>
+            </div>` : ''}
+            ${r.description ? `
+            <div class="record-field full">
+              <span class="record-field-label">Observação</span>
+              <span class="record-field-value">${r.description}</span>
+            </div>` : ''}
           </div>
           <div class="record-actions">
-            <button class="btn-record-action" data-action="edit" data-id="${r.id}" aria-label="Editar ${label}">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-              Editar
-            </button>
-            <button class="btn-record-action delete" data-action="delete" data-id="${r.id}" aria-label="Excluir ${label}">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-              Excluir
-            </button>
+            <button class="btn-record-action" data-action="edit" data-id="${r.id}" aria-label="Editar ${label}">Editar</button>
+            <button class="btn-record-action delete" data-action="delete" data-id="${r.id}" aria-label="Excluir ${label}">Excluir</button>
           </div>
         </div>
       `;
