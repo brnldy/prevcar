@@ -1463,14 +1463,14 @@
   // ============================================================
   // SUPABASE
   // ============================================================
-  const supabase = window.supabase?.createClient(
+  const db = window.supabase?.createClient(
     'https://azgddwmpkndpwrojqypq.supabase.co',
     'sb_publishable_DqoJGQpaZhOyUJidsZ0h-Q_zdNYLyT_'
   ) ?? null;
 
   async function saveCarToSupabase(car) {
-    if (!supabase) return;
-    const { error } = await supabase.from('vehicles').insert([{
+    if (!db) return;
+    const { error } = await db.from('vehicles').insert([{
       placa:   car.placa,
       marca:   car.marca,
       modelo:  car.modelo,
@@ -1484,10 +1484,10 @@
   }
 
   async function insertMaintenanceToSupabase(record) {
-    if (!supabase) return;
+    if (!db) return;
     const placa = getPlaca();
     if (!placa) return;
-    const { error } = await supabase.from('manutencoes').insert([{
+    const { error } = await db.from('manutencoes').insert([{
       id:          record.id,
       placa,
       tipo:        record.type,
@@ -1502,8 +1502,8 @@
   }
 
   async function updateMaintenanceInSupabase(id, changes) {
-    if (!supabase) return;
-    const { error } = await supabase.from('manutencoes').update({
+    if (!db) return;
+    const { error } = await db.from('manutencoes').update({
       tipo:          changes.type,
       descricao:     changes.description || null,
       data:          changes.date,
@@ -1515,8 +1515,8 @@
   }
 
   async function deleteMaintenanceFromSupabase(id) {
-    if (!supabase) return;
-    const { error } = await supabase.from('manutencoes').delete().eq('id', id);
+    if (!db) return;
+    const { error } = await db.from('manutencoes').delete().eq('id', id);
     if (error) console.error('[PrevCar] Supabase manutencoes delete error:', error);
   }
 
