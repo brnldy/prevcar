@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Overpass:wght@300;400;600;700;900&family=Overpass+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <style>
     /* ================================
        DESIGN TOKENS
@@ -179,6 +180,14 @@
       display: grid;
       grid-template-columns: 1fr 84px;
       gap: var(--sp-3);
+    }
+
+    .input-placa {
+      font-family: var(--font-mono);
+      font-size: var(--text-lg);
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
     }
 
     .btn-primary.loading {
@@ -1168,6 +1177,21 @@
         <span class="field-error" id="modelo-error" role="alert">Informe o modelo.</span>
       </div>
 
+      <div class="field">
+        <label class="field-label" for="input-placa">Placa</label>
+        <input
+          type="text"
+          id="input-placa"
+          class="input input-placa"
+          placeholder="ABC1D23"
+          autocomplete="off"
+          maxlength="7"
+          inputmode="text"
+          aria-describedby="placa-error"
+        >
+        <span class="field-error" id="placa-error" role="alert">Placa inválida.</span>
+      </div>
+
       <button type="submit" class="btn-primary" id="btn-register">
         Começar a registrar
       </button>
@@ -1435,6 +1459,24 @@
   // ============================================================
 
   const GEMINI_KEY = 'AIzaSyDTGVqQI0fdY0RFnK3oNH1dOU5Qxffu2RA';
+
+  // ============================================================
+  // SUPABASE
+  // ============================================================
+  const supabase = window.supabase.createClient(
+    'https://azgddwmpkndpwrojqypq.supabase.co',
+    'sb_publishable_DqoJGQpaZhOyUJidsZ0h-Q_zdNYLyT_'
+  );
+
+  async function saveCarToSupabase(car) {
+    const { error } = await supabase.from('vehicles').insert([{
+      placa:   car.placa,
+      marca:   car.marca,
+      modelo:  car.modelo,
+      ano:     car.ano,
+    }]);
+    if (error) console.error('[PrevCar] Supabase error:', error);
+  }
 
   async function fetchCarData(marca, modelo, ano) {
     const prompt = `Retorne APENAS um objeto JSON para um ${marca} ${modelo} ${ano} no mercado brasileiro.
@@ -1857,6 +1899,7 @@ Responda APENAS com o JSON puro, sem markdown, sem explicações.`;
     const marca  = document.getElementById('input-marca').value.trim();
     const modelo = document.getElementById('input-modelo').value.trim();
     const anoVal = parseInt(document.getElementById('input-ano').value);
+    const placa  = document.getElementById('input-placa').value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
 
     let ok = true;
 
@@ -1888,6 +1931,16 @@ Responda APENAS com o JSON puro, sem markdown, sem explicações.`;
       document.getElementById('ano-error').classList.remove('visible');
     }
 
+    const placaValida = /^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/.test(placa);
+    if (!placaValida) {
+      document.getElementById('input-placa').classList.add('error');
+      document.getElementById('placa-error').classList.add('visible');
+      ok = false;
+    } else {
+      document.getElementById('input-placa').classList.remove('error');
+      document.getElementById('placa-error').classList.remove('visible');
+    }
+
     if (!ok) return;
 
     const btn = document.getElementById('btn-register');
@@ -1905,7 +1958,9 @@ Responda APENAS com o JSON puro, sem markdown, sem explicações.`;
       console.error('[PrevCar] Gemini error:', err);
     }
 
-    saveCar({ marca, modelo, ano: anoVal, intervals, problemas, addedAt: new Date().toISOString() });
+    const carData = { placa, marca, modelo, ano: anoVal, intervals, problemas, addedAt: new Date().toISOString() };
+    saveCar(carData);
+    saveCarToSupabase(carData);
     btn.classList.remove('loading');
     btn.textContent = 'Começar a registrar';
     render();
@@ -1916,6 +1971,12 @@ Responda APENAS com o JSON puro, sem markdown, sem explicações.`;
   // ============================================================
   // FORM — RECORD
   // ============================================================
+
+  document.getElementById('input-placa').addEventListener('input', function () {
+    const pos = this.selectionStart;
+    this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    this.setSelectionRange(pos, pos);
+  });
 
   function setToday() {
     document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
