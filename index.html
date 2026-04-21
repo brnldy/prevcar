@@ -1463,12 +1463,13 @@
   // ============================================================
   // SUPABASE
   // ============================================================
-  const supabase = window.supabase.createClient(
+  const supabase = window.supabase?.createClient(
     'https://azgddwmpkndpwrojqypq.supabase.co',
     'sb_publishable_DqoJGQpaZhOyUJidsZ0h-Q_zdNYLyT_'
-  );
+  ) ?? null;
 
   async function saveCarToSupabase(car) {
+    if (!supabase) return;
     const { error } = await supabase.from('vehicles').insert([{
       placa:   car.placa,
       marca:   car.marca,
@@ -1483,6 +1484,7 @@
   }
 
   async function insertMaintenanceToSupabase(record) {
+    if (!supabase) return;
     const placa = getPlaca();
     if (!placa) return;
     const { error } = await supabase.from('manutencoes').insert([{
@@ -1500,6 +1502,7 @@
   }
 
   async function updateMaintenanceInSupabase(id, changes) {
+    if (!supabase) return;
     const { error } = await supabase.from('manutencoes').update({
       tipo:          changes.type,
       descricao:     changes.description || null,
@@ -1512,6 +1515,7 @@
   }
 
   async function deleteMaintenanceFromSupabase(id) {
+    if (!supabase) return;
     const { error } = await supabase.from('manutencoes').delete().eq('id', id);
     if (error) console.error('[PrevCar] Supabase manutencoes delete error:', error);
   }
