@@ -502,44 +502,6 @@
     }
 
     /* ================================
-       FIQUE DE OLHO — chronic issues
-       ================================ */
-    #section-problemas { display: none; }
-    #section-problemas.visible { display: block; }
-
-    .problemas-list {
-      display: flex;
-      flex-direction: column;
-      gap: var(--sp-2);
-      padding: 0 var(--sp-4) var(--sp-6);
-    }
-
-    .problema-item {
-      display: flex;
-      align-items: flex-start;
-      gap: var(--sp-2);
-      font-size: var(--text-sm);
-      color: var(--text-secondary);
-      line-height: 1.45;
-    }
-
-    .problema-item::before {
-      content: '!';
-      flex-shrink: 0;
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      background: var(--warning-bg);
-      color: var(--warning);
-      font-size: 10px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-top: 1px;
-    }
-
-    /* ================================
        DIVIDER
        ================================ */
     .section-divider {
@@ -1242,16 +1204,6 @@
 
     <div class="section-divider"></div>
 
-    <!-- Fique de olho -->
-    <section id="section-problemas" aria-label="Pontos de atenção do modelo">
-      <div class="section-header" style="padding-top: var(--sp-6);">
-        <h2 class="section-title">Fique de olho</h2>
-      </div>
-      <div class="problemas-list" id="problemas-list"></div>
-    </section>
-
-    <div id="divider-problemas" class="section-divider" style="display:none"></div>
-
     <!-- Timeline -->
     <div class="section-header">
       <h2 class="section-title">Histórico</h2>
@@ -1468,6 +1420,29 @@
     'sb_publishable_DqoJGQpaZhOyUJidsZ0h-Q_zdNYLyT_'
   ) ?? null;
 
+  async function fetchCarFromSupabase(placa) {
+    if (!db) return null;
+    const { data, error } = await db.from('vehicles').select('*').eq('placa', placa).maybeSingle();
+    if (error || !data) return null;
+    return data;
+  }
+
+  async function fetchRecordsFromSupabase(placa) {
+    if (!db) return [];
+    const { data, error } = await db.from('manutencoes').select('*').eq('placa', placa).order('data', { ascending: false });
+    if (error || !data) return [];
+    return data.map(r => ({
+      id:          r.id,
+      type:        r.tipo,
+      description: r.descricao || '',
+      date:        r.data,
+      mileage:     r.quilometragem,
+      cost:        r.custo,
+      location:    r.local || '',
+      addedAt:     r.criado_em,
+    }));
+  }
+
   async function saveCarToSupabase(car) {
     if (!db) return;
     const { error } = await db.from('vehicles').insert([{
@@ -1521,7 +1496,7 @@
   }
 
   async function fetchCarData(marca, modelo, ano) {
-    const prompt = `Retorne um objeto JSON para um ${marca} ${modelo} ${ano} no mercado brasileiro com esta estrutura exata (valores inteiros, null se não aplicável):
+    const prompt = `Retorne um objeto JSON com os intervalos de manutenção recomendados para um ${marca} ${modelo} ${ano} no mercado brasileiro. Use esta estrutura exata (valores inteiros em km ou dias, null se não aplicável):
 {
   "intervals": {
     "troca-oleo":     { "km": NUMBER_OR_NULL, "days": NUMBER_OR_NULL },
@@ -1533,10 +1508,9 @@
     "correia":        { "km": NUMBER_OR_NULL, "days": null },
     "bateria":        { "km": null,           "days": NUMBER_OR_NULL },
     "suspensao":      { "km": NUMBER_OR_NULL, "days": null }
-  },
-  "problemas": ["frase curta max 60 chars"]
+  }
 }
-"problemas": falhas crônicas conhecidas deste modelo (max 4, frases diretas). Array vazio se não houver.`;
+Importante: "days" representa DIAS (ex: troca de óleo a cada 365 dias = 1 ano). Valores mínimos esperados: troca-oleo km≥5000 days≥180, bateria days≥365.`;
 
     const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
@@ -1553,7 +1527,33 @@
     });
     if (!res.ok) throw new Error(`Groq ${res.status}`);
     const data = await res.json();
-    return JSON.parse(data.choices[0].message.content);
+    const parsed = JSON.parse(data.choices[0].message.content);
+    return { intervals: sanitizeIntervals(parsed.intervals ?? parsed) };
+  }
+
+  const INTERVAL_MINS = {
+    'troca-oleo':     { km: 5000,  days: 180 },
+    'rodizio-pneus':  { km: 5000,  days: null },
+    'pastilha-freio': { km: 10000, days: null },
+    'alinhamento':    { km: 5000,  days: null },
+    'revisao-geral':  { km: 5000,  days: 180 },
+    'filtros':        { km: 5000,  days: null },
+    'correia':        { km: 20000, days: null },
+    'bateria':        { km: null,  days: 365  },
+    'suspensao':      { km: 10000, days: null },
+  };
+
+  function sanitizeIntervals(raw) {
+    if (!raw || typeof raw !== 'object') return INTERVALS;
+    const result = {};
+    for (const [key, val] of Object.entries(raw)) {
+      const min = INTERVAL_MINS[key] || {};
+      result[key] = {
+        km:   val.km   != null ? Math.max(val.km,   min.km   || 0) : null,
+        days: val.days != null ? Math.max(val.days, min.days || 0) : null,
+      };
+    }
+    return result;
   }
 
   function getIntervals() {
@@ -1816,26 +1816,6 @@
     });
   }
 
-  function renderProblemas() {
-    const car = getCar();
-    const section  = document.getElementById('section-problemas');
-    const divider  = document.getElementById('divider-problemas');
-    const list     = document.getElementById('problemas-list');
-    const problemas = car?.problemas ?? [];
-
-    if (!problemas.length) {
-      section.classList.remove('visible');
-      divider.style.display = 'none';
-      return;
-    }
-
-    list.innerHTML = problemas
-      .map(p => `<div class="problema-item">${p}</div>`)
-      .join('');
-    section.classList.add('visible');
-    divider.style.display = '';
-  }
-
   function render() {
     const car     = getCar();
     const records = getRecords();
@@ -1846,7 +1826,6 @@
         : '';
     }
     renderPredictions(records);
-    renderProblemas();
     renderTimeline(records);
   }
 
@@ -1987,18 +1966,32 @@
     btn.classList.add('loading');
     btn.textContent = 'Consultando…';
 
-    let intervals = null;
-    let problemas = [];
+    // Check if plate already exists in Supabase
+    const existing = await fetchCarFromSupabase(placa);
+    if (existing) {
+      btn.textContent = 'Carregando seus dados…';
+      const [existingIntervals, records] = await Promise.all([
+        fetchCarData(existing.marca, existing.modelo, existing.ano).then(r => r.intervals).catch(() => null),
+        fetchRecordsFromSupabase(placa),
+      ]);
+      saveCar({ placa: existing.placa, marca: existing.marca, modelo: existing.modelo, ano: existing.ano, intervals: existingIntervals, addedAt: existing.created_at });
+      saveRecords(records);
+      btn.classList.remove('loading');
+      btn.textContent = 'Começar a registrar';
+      render();
+      showScreen('screen-app');
+      return;
+    }
 
+    let intervals = null;
     try {
       const result = await fetchCarData(marca, modelo, anoVal);
       intervals = result.intervals ?? null;
-      problemas = Array.isArray(result.problemas) ? result.problemas : [];
     } catch (err) {
-      console.error('[PrevCar] Gemini error:', err);
+      console.error('[PrevCar] Groq error:', err);
     }
 
-    const carData = { placa, marca, modelo, ano: anoVal, intervals, problemas, addedAt: new Date().toISOString() };
+    const carData = { placa, marca, modelo, ano: anoVal, intervals, addedAt: new Date().toISOString() };
     saveCar(carData);
     saveCarToSupabase(carData);
     btn.classList.remove('loading');
