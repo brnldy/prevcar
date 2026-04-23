@@ -724,121 +724,168 @@
     .fab.open .fab-symbol { transform: rotate(45deg); }
 
     /* ================================
-       SCRIM
+       WIZARD — step-by-step full screen
        ================================ */
-    .scrim {
+    .wizard {
       position: fixed;
       inset: 0;
-      z-index: var(--z-scrim);
-      background: oklch(0% 0 0 / 0);
-      pointer-events: none;
-      transition: background-color 300ms var(--ease-out-quart);
-    }
-
-    .scrim.open { background: oklch(0% 0 0 / 0.65); pointer-events: auto; }
-
-    /* ================================
-       BOTTOM SHEET
-       ================================ */
-    .sheet {
-      position: fixed;
-      bottom: 0; left: 0; right: 0;
       z-index: var(--z-sheet);
-      background: var(--bg-elevated);
-      border-top: 1px solid var(--border);
-      border-radius: 16px 16px 0 0;
-      max-height: 92dvh;
+      background: var(--bg);
       display: flex;
       flex-direction: column;
       transform: translateY(100%);
-      transition: transform 380ms var(--ease-out-expo);
-      padding-bottom: max(var(--sp-4), env(safe-area-inset-bottom));
+      transition: transform 420ms var(--ease-out-expo);
     }
 
-    .sheet.open { transform: translateY(0); }
+    .wizard.open { transform: translateY(0); }
 
-    /* Edit modal variant */
-    .sheet--modal {
-      bottom: auto;
-      top: 50%;
-      left: 50%;
-      right: auto;
-      max-width: min(420px, calc(100vw - 32px));
-      border-radius: 16px;
-      border-top: none;
-      border: 1px solid var(--border);
-      transform: translate(-50%, calc(-50% + 16px));
-      opacity: 0;
-      transition: opacity 240ms var(--ease-out-expo), transform 240ms var(--ease-out-expo);
-    }
-    .sheet--modal .sheet-handle { display: none; }
-    .sheet--modal.open {
-      transform: translate(-50%, -50%) !important;
-      opacity: 1 !important;
-    }
-
-    .sheet-handle {
-      display: flex;
-      justify-content: center;
-      padding: var(--sp-3) var(--sp-4) var(--sp-2);
-      flex-shrink: 0;
-    }
-
-    .sheet-handle-bar {
-      width: 36px; height: 4px;
-      border-radius: 2px;
-      background: var(--border);
-    }
-
-    .sheet-top {
+    .wiz-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 var(--sp-4) var(--sp-4);
+      padding: max(var(--sp-4), env(safe-area-inset-top)) var(--sp-2) var(--sp-2);
       flex-shrink: 0;
     }
 
-    .sheet-title {
-      font-size: var(--text-lg);
-      font-weight: 700;
-      letter-spacing: -0.02em;
-    }
-
-    .sheet-close {
-      width: 32px; height: 32px;
-      border-radius: 50%;
-      background: var(--bg-overlay);
+    .wiz-btn-icon {
+      width: 44px; height: 44px;
+      display: flex; align-items: center; justify-content: center;
       color: var(--text-secondary);
-      font-size: 17px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background-color 150ms, color 150ms;
+      border-radius: 50%;
+      font-size: 18px;
+      transition: background 150ms, color 150ms;
     }
 
-    .sheet-close:hover { background: var(--border); color: var(--text-primary); }
-    .sheet-close:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .wiz-btn-icon:hover { background: var(--bg-overlay); color: var(--text-primary); }
+    .wiz-btn-icon:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 50%; }
 
-    .sheet-scroll { overflow-y: auto; overscroll-behavior: contain; flex: 1; }
+    .wiz-dots {
+      display: flex;
+      gap: var(--sp-2);
+      align-items: center;
+    }
 
-    .sheet-form {
+    .wiz-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--border);
+      transition: background 250ms, transform 250ms, width 250ms;
+    }
+
+    .wiz-dot.active { background: var(--accent); width: 18px; border-radius: 3px; }
+    .wiz-dot.done   { background: var(--success); }
+
+    /* Steps track */
+    .wiz-track {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .wizard-step {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(100%);
+      transition: transform 360ms var(--ease-out-expo);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+    }
+
+    .wizard-step.active { transform: translateX(0); }
+    .wizard-step.past   { transform: translateX(-30%); }
+
+    .wiz-content {
+      flex: 1;
+      padding: var(--sp-6) var(--sp-6) var(--sp-4);
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-6);
+    }
+
+    .wiz-eyebrow {
+      font-size: var(--text-xs);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-tertiary);
+    }
+
+    .wiz-question {
+      font-size: clamp(2rem, 10vw, 3rem);
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      line-height: 1.0;
+      color: var(--text-primary);
+    }
+
+    /* Service type grid */
+    .wiz-service-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--sp-2);
+    }
+
+    .wiz-service-btn {
+      padding: var(--sp-3) var(--sp-3);
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text-secondary);
+      font-size: var(--text-sm);
+      font-weight: 600;
+      text-align: left;
+      line-height: 1.3;
+      transition: border-color 150ms, background 150ms, color 150ms, transform 100ms;
+      min-height: 52px;
+    }
+
+    .wiz-service-btn:active { transform: scale(0.96); }
+
+    .wiz-service-btn.selected,
+    .wiz-service-btn:hover {
+      border-color: var(--accent);
+      background: var(--accent-bg);
+      color: var(--accent);
+    }
+
+    .wiz-fields {
       display: flex;
       flex-direction: column;
       gap: var(--sp-4);
-      padding: 0 var(--sp-4);
     }
 
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
+    .wiz-footer {
+      padding: var(--sp-4) var(--sp-6) max(var(--sp-8), calc(var(--sp-6) + env(safe-area-inset-bottom)));
+      display: flex;
       gap: var(--sp-3);
-    }
-
-    .sheet-footer {
-      padding: var(--sp-4) var(--sp-4) 0;
       flex-shrink: 0;
       border-top: 1px solid var(--border-subtle);
-      margin-top: var(--sp-4);
+      background: var(--bg);
+    }
+
+    .wiz-footer .btn-primary { flex: 1; }
+
+    .btn-ghost {
+      padding: var(--sp-4) var(--sp-4);
+      color: var(--text-tertiary);
+      font-size: var(--text-base);
+      font-weight: 600;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      transition: color 150ms, border-color 150ms;
+      min-height: 52px;
+      white-space: nowrap;
+    }
+
+    .btn-ghost:hover { color: var(--text-secondary); }
+
+    .field-optional {
+      font-weight: 400;
+      text-transform: none;
+      letter-spacing: 0;
+      font-size: var(--text-xs);
     }
 
     /* ================================
@@ -1241,137 +1288,90 @@
   id="fab"
   aria-label="Registrar novo serviço"
   aria-expanded="false"
-  aria-controls="sheet"
 >
   <span class="fab-symbol" aria-hidden="true">+</span>
 </button>
 
 <!-- =====================
-     SCRIM
+     WIZARD
      ===================== -->
-<div class="scrim" id="scrim" aria-hidden="true"></div>
+<div id="wizard" class="wizard" role="dialog" aria-modal="true" aria-label="Registrar serviço">
 
-<!-- =====================
-     BOTTOM SHEET
-     ===================== -->
-<div
-  class="sheet"
-  id="sheet"
-  role="dialog"
-  aria-modal="true"
-  aria-labelledby="sheet-title"
->
-  <div class="sheet-handle" aria-hidden="true">
-    <div class="sheet-handle-bar"></div>
+  <div class="wiz-header">
+    <button class="wiz-btn-icon" id="wiz-back" aria-label="Voltar">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    </button>
+    <div class="wiz-dots" id="wiz-dots">
+      <div class="wiz-dot" data-dot="1"></div>
+      <div class="wiz-dot" data-dot="2"></div>
+      <div class="wiz-dot" data-dot="3"></div>
+    </div>
+    <button class="wiz-btn-icon" id="wiz-close" aria-label="Cancelar">✕</button>
   </div>
 
-  <div class="sheet-top">
-    <h3 class="sheet-title" id="sheet-title">Registrar serviço</h3>
-    <button class="sheet-close" id="btn-close-sheet" aria-label="Fechar">✕</button>
-  </div>
+  <div class="wiz-track">
 
-  <div class="sheet-scroll">
-    <form class="sheet-form" id="form-record" novalidate>
-
-      <div class="field">
-        <label class="field-label" for="f-service-type">Tipo de serviço</label>
-        <select class="input" id="f-service-type" required aria-required="true" aria-describedby="f-service-type-err">
-          <option value="">Selecione o serviço</option>
-          <option value="troca-oleo">Troca de óleo</option>
-          <option value="rodizio-pneus">Rodízio de pneus</option>
-          <option value="pastilha-freio">Pastilhas de freio</option>
-          <option value="alinhamento">Alinhamento / Balanceamento</option>
-          <option value="revisao-geral">Revisão geral</option>
-          <option value="filtros">Troca de filtros</option>
-          <option value="correia">Correia dentada</option>
-          <option value="bateria">Bateria</option>
-          <option value="suspensao">Suspensão</option>
-          <option value="outro">Outro serviço</option>
-        </select>
-        <span class="field-error" id="f-service-type-err" role="alert">Selecione o tipo de serviço.</span>
+    <!-- Step 1: Service type -->
+    <div class="wizard-step" data-step="1">
+      <div class="wiz-content">
+        <p class="wiz-eyebrow">Passo 1 de 3</p>
+        <h2 class="wiz-question">Que serviço<br>foi feito?</h2>
+        <div class="wiz-service-grid" id="wiz-service-grid"></div>
       </div>
+    </div>
 
-      <div class="field">
-        <label class="field-label" for="f-description">
-          Descrição ou peça
-          <span style="font-weight:400;text-transform:none;letter-spacing:0"> — opcional</span>
-        </label>
-        <input
-          type="text"
-          class="input"
-          id="f-description"
-          placeholder="Ex: Filtro de óleo sintético 5W30"
-          autocomplete="off"
-        >
-      </div>
-
-      <div class="form-row">
-        <div class="field">
-          <label class="field-label" for="f-date">Data</label>
-          <input
-            type="date"
-            class="input"
-            id="f-date"
-            required
-            aria-required="true"
-            aria-describedby="f-date-err"
-          >
-          <span class="field-error" id="f-date-err" role="alert">Informe a data.</span>
-        </div>
-
-        <div class="field">
-          <label class="field-label" for="f-mileage">Quilometragem</label>
-          <input
-            type="number"
-            class="input"
-            id="f-mileage"
-            placeholder="Ex: 45000"
-            inputmode="numeric"
-            min="0"
-            required
-            aria-required="true"
-            aria-describedby="f-mileage-err"
-          >
-          <span class="field-error" id="f-mileage-err" role="alert">Informe a quilometragem.</span>
-        </div>
-      </div>
-
-      <div class="form-row">
-        <div class="field">
-          <label class="field-label" for="f-cost">Custo</label>
-          <div class="input-with-prefix">
-            <span class="input-prefix-label" aria-hidden="true">R$</span>
-            <input
-              type="number"
-              class="input"
-              id="f-cost"
-              placeholder="0,00"
-              inputmode="decimal"
-              min="0"
-              step="0.01"
-            >
+    <!-- Step 2: Date + KM -->
+    <div class="wizard-step" data-step="2">
+      <div class="wiz-content">
+        <p class="wiz-eyebrow">Passo 2 de 3</p>
+        <h2 class="wiz-question">Data e<br>quilometragem</h2>
+        <div class="wiz-fields">
+          <div class="field">
+            <label class="field-label" for="w-date">Data</label>
+            <input type="date" id="w-date" class="input" required aria-describedby="w-date-err">
+            <span class="field-error" id="w-date-err" role="alert">Informe a data.</span>
+          </div>
+          <div class="field">
+            <label class="field-label" for="w-km">Quilometragem</label>
+            <input type="number" id="w-km" class="input" placeholder="Ex: 45000" inputmode="numeric" min="0" required aria-describedby="w-km-err">
+            <span class="field-error" id="w-km-err" role="alert">Informe a quilometragem.</span>
           </div>
         </div>
+      </div>
+      <div class="wiz-footer">
+        <button class="btn-primary" id="wiz-next-2">Próximo</button>
+      </div>
+    </div>
 
-        <div class="field">
-          <label class="field-label" for="f-location">Local / oficina</label>
-          <input
-            type="text"
-            class="input"
-            id="f-location"
-            placeholder="Ex: Auto Center Silva"
-            autocomplete="off"
-          >
+    <!-- Step 3: Optional details -->
+    <div class="wizard-step" data-step="3">
+      <div class="wiz-content">
+        <p class="wiz-eyebrow">Passo 3 de 3 · Opcionais</p>
+        <h2 class="wiz-question">Mais<br>detalhes</h2>
+        <div class="wiz-fields">
+          <div class="field">
+            <label class="field-label" for="w-cost">Custo <span class="field-optional">— opcional</span></label>
+            <div class="input-with-prefix">
+              <span class="input-prefix-label" aria-hidden="true">R$</span>
+              <input type="number" id="w-cost" class="input" placeholder="0,00" inputmode="decimal" min="0" step="0.01">
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label" for="w-location">Local / oficina <span class="field-optional">— opcional</span></label>
+            <input type="text" id="w-location" class="input" placeholder="Ex: Auto Center Silva" autocomplete="off">
+          </div>
+          <div class="field">
+            <label class="field-label" for="w-desc">Observação <span class="field-optional">— opcional</span></label>
+            <input type="text" id="w-desc" class="input" placeholder="Ex: Óleo sintético 5W30" autocomplete="off">
+          </div>
         </div>
       </div>
+      <div class="wiz-footer">
+        <button class="btn-ghost" id="wiz-skip">Pular</button>
+        <button class="btn-primary" id="wiz-submit">Registrar</button>
+      </div>
+    </div>
 
-    </form>
-  </div>
-
-  <div class="sheet-footer">
-    <button type="submit" form="form-record" class="btn-primary" style="width:100%">
-      Salvar registro
-    </button>
   </div>
 </div>
 
@@ -1841,49 +1841,135 @@ Importante: "days" representa DIAS (ex: troca de óleo a cada 365 dias = 1 ano).
   }
 
   // ============================================================
-  // SHEET STATE
+  // WIZARD STATE
   // ============================================================
 
-  let sheetIsOpen = false;
-  let editingRecordId = null;
+  let wizardStep = 1;
+  let wizardEditId = null;
+  let wizardData = {};
 
-  function openSheet() {
-    sheetIsOpen = true;
-    document.getElementById('sheet').classList.add('open');
-    document.getElementById('scrim').classList.add('open');
-    document.getElementById('fab').classList.add('open');
+  function goWizardStep(n) {
+    document.querySelectorAll('.wizard-step').forEach(s => {
+      const sn = parseInt(s.dataset.step);
+      s.classList.remove('active', 'past');
+      if (sn === n) s.classList.add('active');
+      else if (sn < n) s.classList.add('past');
+    });
+    wizardStep = n;
+
+    document.querySelectorAll('.wiz-dot').forEach(d => {
+      const dn = parseInt(d.dataset.dot);
+      d.classList.remove('active', 'done');
+      if (dn === n) d.classList.add('active');
+      else if (dn < n) d.classList.add('done');
+    });
+
+    document.getElementById('wiz-back').style.visibility = n === 1 ? 'hidden' : 'visible';
+  }
+
+  function openWizard(editId = null) {
+    wizardEditId = editId;
+    wizardData = {};
+
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('w-date').value     = today;
+    document.getElementById('w-km').value       = '';
+    document.getElementById('w-cost').value     = '';
+    document.getElementById('w-location').value = '';
+    document.getElementById('w-desc').value     = '';
+    document.querySelectorAll('.wiz-service-btn').forEach(b => b.classList.remove('selected'));
+
+    if (editId) {
+      const rec = getRecords().find(r => r.id === editId);
+      if (rec) {
+        wizardData = { type: rec.type };
+        document.getElementById('w-date').value     = rec.date;
+        document.getElementById('w-km').value       = rec.mileage;
+        document.getElementById('w-cost').value     = rec.cost ?? '';
+        document.getElementById('w-location').value = rec.location ?? '';
+        document.getElementById('w-desc').value     = rec.description ?? '';
+        document.querySelectorAll('.wiz-service-btn').forEach(b => {
+          b.classList.toggle('selected', b.dataset.type === rec.type);
+        });
+      }
+    }
+
+    goWizardStep(editId ? 2 : 1);
+    document.getElementById('wizard').classList.add('open');
     document.getElementById('fab').setAttribute('aria-expanded', 'true');
     document.getElementById('screen-app').setAttribute('inert', '');
-    setTimeout(() => document.getElementById('f-service-type').focus(), 380);
   }
 
-  function closeSheet() {
-    sheetIsOpen = false;
-    editingRecordId = null;
-    document.getElementById('sheet-title').textContent = 'Registrar serviço';
-    document.getElementById('sheet').classList.remove('sheet--modal');
-    document.getElementById('sheet').classList.remove('open');
-    document.getElementById('scrim').classList.remove('open');
-    document.getElementById('fab').classList.remove('open');
+  function closeWizard() {
+    document.getElementById('wizard').classList.remove('open');
     document.getElementById('fab').setAttribute('aria-expanded', 'false');
     document.getElementById('screen-app').removeAttribute('inert');
-    document.getElementById('fab').focus();
+    setTimeout(() => goWizardStep(1), 420);
   }
 
-  function openSheetForEdit(id) {
-    const rec = getRecords().find(r => r.id === id);
-    if (!rec) return;
-    editingRecordId = id;
-    document.getElementById('f-service-type').value  = rec.type;
-    document.getElementById('f-date').value          = rec.date;
-    document.getElementById('f-mileage').value       = rec.mileage;
-    document.getElementById('f-cost').value          = rec.cost ?? '';
-    document.getElementById('f-description').value   = rec.description ?? '';
-    document.getElementById('f-location').value      = rec.location ?? '';
-    document.getElementById('sheet-title').textContent = 'Editar registro';
-    document.getElementById('sheet').classList.add('sheet--modal');
-    openSheet();
+  function validateStep2() {
+    const date = document.getElementById('w-date').value;
+    const km   = document.getElementById('w-km').value;
+    let ok = true;
+    const setErr = (id, errId, cond) => {
+      document.getElementById(id).classList.toggle('error', !cond);
+      document.getElementById(errId).classList.toggle('visible', !cond);
+      if (!cond) ok = false;
+    };
+    setErr('w-date', 'w-date-err', !!date);
+    setErr('w-km',   'w-km-err',   !!km && parseInt(km) >= 0);
+    return ok;
   }
+
+  function submitWizard() {
+    const rawCost = parseFloat(document.getElementById('w-cost').value);
+    const data = {
+      type:        wizardData.type,
+      date:        document.getElementById('w-date').value,
+      mileage:     parseInt(document.getElementById('w-km').value),
+      cost:        isNaN(rawCost) ? null : rawCost,
+      location:    document.getElementById('w-location').value.trim(),
+      description: document.getElementById('w-desc').value.trim(),
+    };
+
+    if (wizardEditId) {
+      updateRecord(wizardEditId, data);
+      updateMaintenanceInSupabase(wizardEditId, data);
+      toast('✓  Registro atualizado');
+    } else {
+      const record = {
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
+        ...data,
+        addedAt: new Date().toISOString(),
+      };
+      pushRecord(record);
+      insertMaintenanceToSupabase(record);
+      toast('✓  Registro salvo');
+    }
+    closeWizard();
+    render();
+  }
+
+  function buildWizardServiceGrid() {
+    const grid = document.getElementById('wiz-service-grid');
+    Object.entries(SERVICE_LABELS).forEach(([type, label]) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'wiz-service-btn';
+      btn.dataset.type = type;
+      btn.textContent = label;
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.wiz-service-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        wizardData.type = type;
+        setTimeout(() => goWizardStep(2), 200);
+      });
+      grid.appendChild(btn);
+    });
+  }
+
+  buildWizardServiceGrid();
+  goWizardStep(1);
 
   function updateRecord(id, changes) {
     const recs = getRecords();
@@ -1915,7 +2001,7 @@ Importante: "days" representa DIAS (ex: troca de óleo a cada 365 dias = 1 ano).
     const btn = e.target.closest('.btn-record-action');
     if (!btn) return;
     const { action, id } = btn.dataset;
-    if (action === 'edit')   openSheetForEdit(id);
+    if (action === 'edit')   openWizard(id);
     if (action === 'delete') deleteRecord(id);
   });
 
@@ -2013,7 +2099,7 @@ Importante: "days" representa DIAS (ex: troca de óleo a cada 365 dias = 1 ano).
 
 
   // ============================================================
-  // FORM — RECORD
+  // PLACA INPUT AUTO-UPPERCASE
   // ============================================================
 
   document.getElementById('input-placa').addEventListener('input', function () {
@@ -2022,92 +2108,25 @@ Importante: "days" representa DIAS (ex: troca de óleo a cada 365 dias = 1 ano).
     this.setSelectionRange(pos, pos);
   });
 
-  function setToday() {
-    document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
-  }
-
-  document.getElementById('form-record').addEventListener('submit', e => {
-    e.preventDefault();
-
-    const type     = document.getElementById('f-service-type').value;
-    const date     = document.getElementById('f-date').value;
-    const mileage  = document.getElementById('f-mileage').value;
-
-    let ok = true;
-
-    function check(id, errId, cond) {
-      const el = document.getElementById(id);
-      const er = document.getElementById(errId);
-      if (!cond) {
-        el.classList.add('error');
-        er.classList.add('visible');
-        ok = false;
-      } else {
-        el.classList.remove('error');
-        er.classList.remove('visible');
-      }
-    }
-
-    check('f-service-type', 'f-service-type-err', !!type);
-    check('f-date',         'f-date-err',         !!date);
-    check('f-mileage',      'f-mileage-err',       !!mileage && parseInt(mileage) >= 0);
-
-    if (!ok) return;
-
-    const rawCost = parseFloat(document.getElementById('f-cost').value);
-
-    const data = {
-      type,
-      description: document.getElementById('f-description').value.trim(),
-      date,
-      mileage:     parseInt(mileage),
-      cost:        isNaN(rawCost) ? null : rawCost,
-      location:    document.getElementById('f-location').value.trim(),
-    };
-
-    if (editingRecordId) {
-      updateRecord(editingRecordId, data);
-      updateMaintenanceInSupabase(editingRecordId, data);
-      e.target.reset();
-      setToday();
-      closeSheet();
-      render();
-      toast('✓  Registro atualizado');
-    } else {
-      const record = {
-        id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
-        ...data,
-        addedAt: new Date().toISOString(),
-      };
-      pushRecord(record);
-      insertMaintenanceToSupabase(record);
-      e.target.reset();
-      setToday();
-      closeSheet();
-      render();
-      toast('✓  Registro salvo com sucesso');
-    }
-  });
-
-  // Clear errors on change
-  ['f-service-type', 'f-date', 'f-mileage'].forEach(id => {
-    document.getElementById(id).addEventListener('change', function () {
-      this.classList.remove('error');
-      const errEl = document.getElementById(id + '-err');
-      if (errEl) errEl.classList.remove('visible');
-    });
-  });
-
   // ============================================================
-  // FAB + SHEET CONTROLS
+  // WIZARD CONTROLS
   // ============================================================
 
-  document.getElementById('fab').addEventListener('click', openSheet);
-  document.getElementById('btn-close-sheet').addEventListener('click', closeSheet);
-  document.getElementById('scrim').addEventListener('click', closeSheet);
+  document.getElementById('fab').addEventListener('click', () => openWizard());
+  document.getElementById('wiz-close').addEventListener('click', closeWizard);
+  document.getElementById('wiz-back').addEventListener('click', () => {
+    if (wizardStep > 1) goWizardStep(wizardStep - 1);
+  });
+  document.getElementById('wiz-next-2').addEventListener('click', () => {
+    if (validateStep2()) goWizardStep(3);
+  });
+  document.getElementById('wiz-skip').addEventListener('click', submitWizard);
+  document.getElementById('wiz-submit').addEventListener('click', submitWizard);
 
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape' && sheetIsOpen) closeSheet();
+    if (e.key === 'Escape' && document.getElementById('wizard').classList.contains('open')) {
+      closeWizard();
+    }
   });
 
   // ============================================================
