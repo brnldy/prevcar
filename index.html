@@ -427,7 +427,7 @@
 
     .prediction-card {
       flex: 0 0 auto;
-      width: 172px;
+      width: 168px;
       background: var(--bg-elevated);
       border: 1px solid var(--border);
       border-radius: 12px;
@@ -435,16 +435,15 @@
       scroll-snap-align: start;
       display: flex;
       flex-direction: column;
-      gap: var(--sp-2);
+      min-height: 130px;
     }
-
 
     .prediction-card[data-status="soon"]    { border-color: oklch(82% 0.145 70 / 0.6); background: var(--warning-bg); }
     .prediction-card[data-status="overdue"] { border-color: oklch(65% 0.175 25 / 0.6); background: var(--danger-bg); }
 
     .prediction-dot {
-      width: 7px;
-      height: 7px;
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
       background: var(--text-tertiary);
       flex-shrink: 0;
@@ -458,60 +457,62 @@
       display: flex;
       align-items: center;
       gap: var(--sp-2);
-      margin-bottom: var(--sp-1);
+      margin-bottom: var(--sp-4);
     }
 
     .prediction-name {
-      font-size: var(--text-sm);
+      font-size: var(--text-xs);
       font-weight: 700;
-      color: var(--text-primary);
-      line-height: 1.25;
-      letter-spacing: -0.01em;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-tertiary);
+      line-height: 1.3;
     }
 
-    /* Big number — the hero inside each card */
-    .prediction-value {
+    .prediction-data {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-2);
+    }
+
+    /* KM — hero value, status-colored */
+    .prediction-km {
       font-family: var(--font-mono);
-      font-size: 1.75rem;
+      font-size: 1.55rem;
       font-weight: 600;
       color: var(--text-primary);
       font-variant-numeric: tabular-nums;
-      line-height: 1.05;
+      line-height: 1.0;
       letter-spacing: -0.03em;
-      margin-top: var(--sp-2);
     }
 
+    .prediction-card[data-status="overdue"] .prediction-km { color: var(--danger); }
+    .prediction-card[data-status="soon"]    .prediction-km { color: var(--warning); }
+    .prediction-card[data-status="ok"]      .prediction-km { color: var(--success); }
 
-    .prediction-card[data-status="overdue"] .prediction-value { color: var(--danger); }
-    .prediction-card[data-status="soon"]    .prediction-value { color: var(--warning); }
-    .prediction-card[data-status="ok"]      .prediction-value { color: var(--success); }
-
-    .prediction-field {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .prediction-field-label {
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.09em;
+    /* Date — secondary, always muted */
+    .prediction-date {
+      font-family: var(--font-mono);
+      font-size: var(--text-sm);
+      font-weight: 500;
       color: var(--text-tertiary);
-    }
-
-    .prediction-value--secondary {
-      font-size: 1.25rem !important;
-      opacity: 0.75;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.01em;
     }
 
     .prediction-sub {
-      font-size: var(--text-xs);
+      margin-top: var(--sp-3);
+      font-size: 10px;
+      font-weight: 700;
       color: var(--text-tertiary);
       font-family: var(--font-mono);
       text-transform: uppercase;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.08em;
     }
+
+    .prediction-card[data-status="overdue"] .prediction-sub { color: var(--danger); }
+    .prediction-card[data-status="soon"]    .prediction-sub { color: var(--warning); }
 
     .predictions-placeholder {
       padding: 0 var(--sp-4) var(--sp-6);
@@ -1751,16 +1752,10 @@ Importante: "days" representa DIAS (ex: troca de óleo a cada 365 dias = 1 ano).
           <div class="prediction-dot" aria-hidden="true"></div>
           <div class="prediction-name">${p.label}</div>
         </div>
-        ${p.kmValue ? `
-          <div class="prediction-field">
-            <div class="prediction-field-label">Quilometragem</div>
-            <div class="prediction-value">${p.kmValue}</div>
-          </div>` : ''}
-        ${p.dateValue ? `
-          <div class="prediction-field">
-            <div class="prediction-field-label">Prazo</div>
-            <div class="prediction-value ${p.kmValue ? 'prediction-value--secondary' : ''}">${p.dateValue}</div>
-          </div>` : ''}
+        <div class="prediction-data">
+          ${p.kmValue   ? `<div class="prediction-km">${p.kmValue}</div>`     : ''}
+          ${p.dateValue ? `<div class="prediction-date">${p.dateValue}</div>` : ''}
+        </div>
         <div class="prediction-sub">${p.overdue ? 'vencido' : 'vencimento'}</div>
       `;
       scroll.appendChild(card);
