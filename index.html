@@ -427,7 +427,7 @@
 
     .prediction-card {
       flex: 0 0 auto;
-      width: 168px;
+      width: 210px;
       background: var(--bg-elevated);
       border: 1px solid var(--border);
       border-radius: 12px;
@@ -479,7 +479,34 @@
     /* KM — hero value, status-colored */
     .prediction-km {
       font-family: var(--font-mono);
-      font-size: 1.55rem;
+      font-size: 1.45rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      font-variant-numeric: tabular-nums;
+      line-height: 1.0;
+      letter-spacing: -0.03em;
+      white-space: nowrap;
+    }
+
+    .prediction-card[data-status="overdue"] .prediction-km { color: var(--danger); }
+    .prediction-card[data-status="soon"]    .prediction-km { color: var(--warning); }
+    .prediction-card[data-status="ok"]      .prediction-km { color: var(--success); }
+
+    /* Date — secondary when both km+date exist */
+    .prediction-ou {
+      font-family: var(--font-mono);
+      font-size: var(--text-sm);
+      font-weight: 500;
+      color: var(--text-tertiary);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.01em;
+      margin-top: var(--sp-1);
+    }
+
+    /* Date only — shown as hero when no km */
+    .prediction-date {
+      font-family: var(--font-mono);
+      font-size: 1.45rem;
       font-weight: 600;
       color: var(--text-primary);
       font-variant-numeric: tabular-nums;
@@ -487,19 +514,9 @@
       letter-spacing: -0.03em;
     }
 
-    .prediction-card[data-status="overdue"] .prediction-km { color: var(--danger); }
-    .prediction-card[data-status="soon"]    .prediction-km { color: var(--warning); }
-    .prediction-card[data-status="ok"]      .prediction-km { color: var(--success); }
-
-    /* Date — secondary, always muted */
-    .prediction-date {
-      font-family: var(--font-mono);
-      font-size: var(--text-sm);
-      font-weight: 500;
-      color: var(--text-tertiary);
-      font-variant-numeric: tabular-nums;
-      letter-spacing: -0.01em;
-    }
+    .prediction-card[data-status="overdue"] .prediction-date { color: var(--danger); }
+    .prediction-card[data-status="soon"]    .prediction-date { color: var(--warning); }
+    .prediction-card[data-status="ok"]      .prediction-date { color: var(--success); }
 
     .prediction-sub {
       margin-top: var(--sp-3);
@@ -794,7 +811,7 @@
     }
 
     .wizard-step.active { transform: translateX(0); }
-    .wizard-step.past   { transform: translateX(-30%); }
+    .wizard-step.past   { transform: translateX(-100%); }
 
     .wiz-content {
       flex: 1;
@@ -1753,8 +1770,14 @@ Importante: "days" representa DIAS (ex: troca de óleo a cada 365 dias = 1 ano).
           <div class="prediction-name">${p.label}</div>
         </div>
         <div class="prediction-data">
-          ${p.kmValue   ? `<div class="prediction-km">${p.kmValue}</div>`     : ''}
-          ${p.dateValue ? `<div class="prediction-date">${p.dateValue}</div>` : ''}
+          ${p.kmValue && p.dateValue
+            ? `<div class="prediction-km">${p.kmValue}</div><div class="prediction-ou">ou ${p.dateValue}</div>`
+            : p.kmValue
+              ? `<div class="prediction-km">${p.kmValue}</div>`
+              : p.dateValue
+                ? `<div class="prediction-date">${p.dateValue}</div>`
+                : ''
+          }
         </div>
         <div class="prediction-sub">${p.overdue ? 'vencido' : 'vencimento'}</div>
       `;
