@@ -425,6 +425,12 @@
 
     .predictions-scroll::-webkit-scrollbar { display: none; }
 
+    /* trailing-space trick — makes right padding visible in overflow scroll */
+    .predictions-scroll::after {
+      content: '';
+      flex: 0 0 var(--sp-4);
+    }
+
     .prediction-card {
       flex: 0 0 auto;
       width: 210px;
@@ -752,6 +758,7 @@
       flex-direction: column;
       transform: translateY(100%);
       transition: transform 420ms var(--ease-out-expo);
+      overflow: hidden;
     }
 
     .wizard.open { transform: translateY(0); }
