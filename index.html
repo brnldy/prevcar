@@ -2147,9 +2147,9 @@ Importante: "days" representa DIAS (ex: troca de óleo a cada 365 dias = 1 ano).
     localStorage.removeItem(STORE_CAR);
     localStorage.removeItem(STORE_RECORDS);
     document.getElementById('confirm-overlay').classList.remove('visible');
-    document.getElementById('input-plate').value = '';
+    document.getElementById('input-placa').value = '';
     showScreen('screen-register');
-    document.getElementById('input-plate').focus();
+    document.getElementById('input-placa').focus();
   });
 
   document.getElementById('confirm-overlay').addEventListener('keydown', e => {
@@ -2189,7 +2189,8 @@ Importante: "days" representa DIAS (ex: troca de óleo a cada 365 dias = 1 ano).
 
   // ============================================================
 
-  setToday();
+  // init wizard date default
+  document.getElementById('w-date').value = new Date().toISOString().split('T')[0];
 
   const car = getCar();
   if (car) {
