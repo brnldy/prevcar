@@ -387,20 +387,23 @@
     .predictions-scroll {
       display: flex;
       gap: var(--sp-3);
-      padding: var(--sp-2) var(--sp-4) var(--sp-8);
+      padding: var(--sp-2) 0 var(--sp-8);
       overflow-x: auto;
       scrollbar-width: none;
       -ms-overflow-style: none;
       scroll-snap-type: x mandatory;
+      scroll-padding-left: var(--sp-4);
     }
 
     .predictions-scroll::-webkit-scrollbar { display: none; }
 
-    /* leading + trailing spacers so padding is visible in overflow scroll */
+    /* spacers: leading gives left margin, trailing makes last card not clip */
     .predictions-scroll::before,
     .predictions-scroll::after {
       content: '';
-      flex: 0 0 var(--sp-4);
+      display: block;
+      min-width: var(--sp-4);
+      flex-shrink: 0;
     }
 
     .prediction-card {
