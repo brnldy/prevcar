@@ -107,22 +107,11 @@
       animation-delay: 0ms;
     }
 
-    .logo-icon {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
+    .logo-svg {
+      height: 30px;
+      width: auto;
+      flex-shrink: 0;
     }
-
-    .logo-icon span {
-      display: block;
-      height: 2px;
-      background: var(--accent);
-      border-radius: 1px;
-    }
-
-    .logo-icon span:nth-child(1) { width: 18px; }
-    .logo-icon span:nth-child(2) { width: 13px; }
-    .logo-icon span:nth-child(3) { width: 8px; }
 
     .logo-name {
       font-size: var(--text-xs);
@@ -332,24 +321,6 @@
       align-items: center;
       gap: var(--sp-2);
     }
-
-    .header-logo-icon {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      flex-shrink: 0;
-    }
-
-    .header-logo-icon span {
-      display: block;
-      height: 2px;
-      background: var(--accent);
-      border-radius: 1px;
-    }
-
-    .header-logo-icon span:nth-child(1) { width: 18px; }
-    .header-logo-icon span:nth-child(2) { width: 13px; }
-    .header-logo-icon span:nth-child(3) { width: 8px; }
 
     .header-brand-name {
       font-size: var(--text-lg);
@@ -1181,9 +1152,11 @@
   <div class="reg-top">
     <div class="reg-top-bar">
       <div class="logo" aria-hidden="true">
-        <div class="logo-icon">
-          <span></span><span></span><span></span>
-        </div>
+        <svg class="logo-svg" viewBox="0 0 188.9 122.08" xmlns="http://www.w3.org/2000/svg">
+          <rect fill="var(--text-secondary)" x="0" y="34.56" width="22.99" height="11.25" rx="5.62" ry="5.62"/>
+          <path fill="none" stroke="var(--text-primary)" stroke-linecap="round" stroke-linejoin="round" stroke-width="10" d="M162.82,26.94s-6.36-21.83-29.64-21.83h-65.05s-27.59-3.01-33.85,21.83-20.35,30.12-20.35,30.12c0,0-10.57,6.26-8.22,22.5v32.87"/>
+          <path fill="var(--accent)" d="M152.69,86.48c-.01.26-.01.49-.01.68s0,.42.01.68c.12,4.16,2.07,16.44,20.76,16.44h15.45v.59s-9.78,17.21-30.32,17.21-27-15.45-27-15.45c0,0-2.74-9.59-18.4-9.59H44.95c-1.43,0-2.59-1.16-2.59-2.59v-14.58c0-1.43,1.16-2.59,2.59-2.59h68.23c15.66,0,18.4-9.59,18.4-9.59,0,0,6.45-15.45,27-15.45s30.32,17.21,30.32,17.21v.59h-15.45c-18.69,0-20.64,12.28-20.76,16.44Z"/>
+        </svg>
         <span class="logo-name">PrevCar</span>
       </div>
       <button class="theme-toggle" id="theme-toggle-reg" aria-label="Ativar modo claro">
@@ -1293,9 +1266,11 @@
 
   <header class="app-header">
     <div class="header-brand">
-      <div class="header-logo-icon" aria-hidden="true">
-        <span></span><span></span><span></span>
-      </div>
+      <svg class="logo-svg" viewBox="0 0 188.9 122.08" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect fill="var(--text-secondary)" x="0" y="34.56" width="22.99" height="11.25" rx="5.62" ry="5.62"/>
+        <path fill="none" stroke="var(--text-primary)" stroke-linecap="round" stroke-linejoin="round" stroke-width="10" d="M162.82,26.94s-6.36-21.83-29.64-21.83h-65.05s-27.59-3.01-33.85,21.83-20.35,30.12-20.35,30.12c0,0-10.57,6.26-8.22,22.5v32.87"/>
+        <path fill="var(--accent)" d="M152.69,86.48c-.01.26-.01.49-.01.68s0,.42.01.68c.12,4.16,2.07,16.44,20.76,16.44h15.45v.59s-9.78,17.21-30.32,17.21-27-15.45-27-15.45c0,0-2.74-9.59-18.4-9.59H44.95c-1.43,0-2.59-1.16-2.59-2.59v-14.58c0-1.43,1.16-2.59,2.59-2.59h68.23c15.66,0,18.4-9.59,18.4-9.59,0,0,6.45-15.45,27-15.45s30.32,17.21,30.32,17.21v.59h-15.45c-18.69,0-20.64,12.28-20.76,16.44Z"/>
+      </svg>
       <span class="header-brand-name">PrevCar</span>
     </div>
     <div class="header-vehicle">
