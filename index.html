@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
   <meta name="description" content="Registro e acompanhamento de manutenções do seu veículo">
-  <meta name="theme-color" id="meta-theme-color" content="#131a13">
+  <meta name="theme-color" content="#f5faf5">
   <title>PrevCar — Manutenção do veículo</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,26 +15,26 @@
        DESIGN TOKENS
        ================================ */
     :root {
-      --bg:              oklch(12% 0.012 65);
-      --bg-elevated:     oklch(17% 0.014 65);
-      --bg-overlay:      oklch(22% 0.016 65);
-      --border:          oklch(27% 0.016 65);
-      --border-subtle:   oklch(20% 0.013 65);
-      --text-primary:    oklch(92% 0.006 65);
-      --text-secondary:  oklch(58% 0.010 65);
-      --text-tertiary:   oklch(38% 0.008 65);
-      /* Vivid green — signal light, "go" */
-      --accent:          oklch(74% 0.270 142);
-      --accent-hover:    oklch(79% 0.270 142);
-      --accent-active:   oklch(60% 0.220 142);
-      --accent-bg:       oklch(19% 0.080 142);
-      --on-accent:       oklch(10% 0.008 142);
-      --success:         oklch(70% 0.180 152);
-      --success-bg:      oklch(17% 0.060 152);
-      --warning:         oklch(82% 0.145 70);
-      --warning-bg:      oklch(19% 0.055 70);
-      --danger:          oklch(65% 0.175 25);
-      --danger-bg:       oklch(17% 0.060 25);
+      --bg:              oklch(97% 0.004 142);
+      --bg-elevated:     oklch(100% 0.000 0);
+      --bg-overlay:      oklch(93% 0.006 142);
+      --border:          oklch(80% 0.012 142);
+      --border-subtle:   oklch(87% 0.007 142);
+      --text-primary:    oklch(17% 0.008 142);
+      --text-secondary:  oklch(42% 0.010 142);
+      --text-tertiary:   oklch(63% 0.008 142);
+      /* Green accent — light mode palette */
+      --accent:          oklch(48% 0.260 142);
+      --accent-hover:    oklch(43% 0.260 142);
+      --accent-active:   oklch(38% 0.220 142);
+      --accent-bg:       oklch(87% 0.090 142);
+      --on-accent:       oklch(98% 0.002 0);
+      --success:         oklch(48% 0.160 152);
+      --success-bg:      oklch(91% 0.060 145);
+      --warning:         oklch(52% 0.145 75);
+      --warning-bg:      oklch(94% 0.065 75);
+      --danger:          oklch(50% 0.175 25);
+      --danger-bg:       oklch(93% 0.055 25);
       --sp-1: 4px;  --sp-2: 8px;   --sp-3: 12px; --sp-4: 16px;
       --sp-6: 24px; --sp-8: 32px;  --sp-12: 48px; --sp-16: 64px;
       --text-xs:   0.75rem;
@@ -83,7 +83,7 @@
       /* Dot-grid background — calibration sheet texture */
       background-image: radial-gradient(
         circle,
-        oklch(28% 0.016 65) 1px,
+        oklch(83% 0.014 142) 1px,
         transparent 1px
       );
       background-size: 28px 28px;
