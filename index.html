@@ -2,2309 +2,1699 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-  <meta name="description" content="Registro e acompanhamento de manutenções do seu veículo">
-  <meta name="theme-color" content="#f5faf5">
-  <title>PrevCar — Manutenção do veículo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="Manutenção do Renault Kwid e da Yamaha Fluo 125">
+  <meta name="theme-color" content="#FBFAF7">
+  <title>PrevCar</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Overpass:wght@300;400;600;700;900&family=Overpass+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-  <style>
-    /* ================================
-       DESIGN TOKENS
-       ================================ */
-    :root {
-      --bg:              oklch(97% 0.004 142);
-      --bg-elevated:     oklch(100% 0.000 0);
-      --bg-overlay:      oklch(93% 0.006 142);
-      --border:          oklch(80% 0.012 142);
-      --border-subtle:   oklch(87% 0.007 142);
-      --text-primary:    oklch(17% 0.008 142);
-      --text-secondary:  oklch(42% 0.010 142);
-      --text-tertiary:   oklch(63% 0.008 142);
-      /* Green accent — light mode palette */
-      --accent:          oklch(48% 0.260 142);
-      --accent-hover:    oklch(43% 0.260 142);
-      --accent-active:   oklch(38% 0.220 142);
-      --accent-bg:       oklch(87% 0.090 142);
-      --on-accent:       oklch(98% 0.002 0);
-      --success:         oklch(48% 0.160 152);
-      --success-bg:      oklch(91% 0.060 145);
-      --warning:         oklch(52% 0.145 75);
-      --warning-bg:      oklch(94% 0.065 75);
-      --danger:          oklch(50% 0.175 25);
-      --danger-bg:       oklch(93% 0.055 25);
-      --sp-1: 4px;  --sp-2: 8px;   --sp-3: 12px; --sp-4: 16px;
-      --sp-6: 24px; --sp-8: 32px;  --sp-12: 48px; --sp-16: 64px;
-      --text-xs:   0.75rem;
-      --text-sm:   0.875rem;
-      --text-base: 1rem;
-      --text-lg:   1.125rem;
-      --text-xl:   1.375rem;
-      --text-2xl:  1.75rem;
-      --font-body: 'Overpass', 'Segoe UI', system-ui, sans-serif;
-      --font-mono: 'Overpass Mono', 'Consolas', monospace;
-      --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
-      --ease-out-expo:  cubic-bezier(0.16, 1, 0.3, 1);
-      --z-sticky: 100; --z-fab: 150; --z-scrim: 200; --z-sheet: 300; --z-toast: 400;
-    }
-
-    /* ================================
-       RESET
-       ================================ */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { font-size: 16px; -webkit-text-size-adjust: 100%; }
-    body {
-      background: var(--bg);
-      color: var(--text-primary);
-      font-family: var(--font-body);
-      font-size: var(--text-base);
-      line-height: 1.55;
-      min-height: 100dvh;
-      overflow-x: hidden;
-    }
-    button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
-    input, select { font-family: inherit; font-size: inherit; }
-
-    /* ================================
-       SCREENS
-       ================================ */
-    .screen { display: none; min-height: 100dvh; }
-    .screen.active { display: flex; }
-
-    /* ================================
-       REGISTRATION SCREEN — BOLD
-       ================================ */
-    #screen-register {
-      flex-direction: column;
-      justify-content: space-between;
-      min-height: 100dvh;
-      /* Dot-grid background — calibration sheet texture */
-      background-image: radial-gradient(
-        circle,
-        oklch(83% 0.014 142) 1px,
-        transparent 1px
-      );
-      background-size: 28px 28px;
-    }
-
-    /* Top zone: brand + hero */
-    .reg-top {
-      padding: max(var(--sp-6), env(safe-area-inset-top, 0px) + var(--sp-4)) var(--sp-6) var(--sp-6);
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-      gap: var(--sp-6);
-    }
-
-    /* Logo: small label, top-left */
-    .logo {
-      display: inline-flex;
-      align-items: center;
-      gap: var(--sp-2);
-      animation: reg-fade-up 500ms var(--ease-out-expo) both;
-      animation-delay: 0ms;
-    }
-
-    .logo-svg {
-      height: 1.1em;
-      width: auto;
-      flex-shrink: 0;
-    }
-
-    .logo-name {
-      font-size: var(--text-xs);
-      font-weight: 700;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--text-tertiary);
-    }
-
-    /* Hero text block */
-    .reg-hero {
-      display: flex;
-      flex-direction: column;
-      gap: var(--sp-4);
-      animation: reg-fade-up 600ms var(--ease-out-expo) both;
-      animation-delay: 80ms;
-    }
-
-    .reg-title {
-      font-size: clamp(2.75rem, 11vw, 4rem);
-      font-weight: 900;
-      letter-spacing: -0.04em;
-      line-height: 1.0;
-      color: var(--text-primary);
-    }
-
-    /* Accent word in title — mechanical amber */
-    .reg-title-accent {
-      color: var(--accent);
-    }
-
-    .reg-subtitle {
-      color: var(--text-secondary);
-      font-size: var(--text-base);
-      max-width: 32ch;
-      line-height: 1.55;
-      font-weight: 300;
-    }
-
-    /* Bottom zone: form on elevated surface */
-    .reg-bottom {
-      background: var(--bg-elevated);
-      border-top: 1px solid var(--border);
-      padding: var(--sp-6) var(--sp-6) max(var(--sp-8), calc(var(--sp-6) + env(safe-area-inset-bottom)));
-      display: flex;
-      flex-direction: column;
-      gap: var(--sp-4);
-      animation: reg-rise 600ms var(--ease-out-expo) both;
-      animation-delay: 160ms;
-    }
-
-    .reg-form { display: flex; flex-direction: column; gap: var(--sp-4); }
-
-    .field-row {
-      display: grid;
-      grid-template-columns: 1fr 84px;
-      gap: var(--sp-3);
-    }
-
-    .input-placa {
-      font-family: var(--font-mono);
-      font-size: var(--text-lg);
-      font-weight: 600;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-    }
-
-    .btn-primary.loading {
-      opacity: 0.65;
-      pointer-events: none;
-    }
-
-    .header-car-info {
-      font-size: var(--text-xs);
-      color: var(--text-tertiary);
-      font-family: var(--font-mono);
-      letter-spacing: 0.02em;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 160px;
-    }
-
-    /* ================================
-       FIELD COMPONENT
-       ================================ */
-    .field { display: flex; flex-direction: column; gap: var(--sp-2); }
-
-    .field-label {
-      font-size: var(--text-xs);
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--text-tertiary);
-    }
-
-    .field-hint {
-      font-size: var(--text-xs);
-      color: var(--text-tertiary);
-      line-height: 1.4;
-    }
-
-    .field-error {
-      font-size: var(--text-xs);
-      color: var(--danger);
-      display: none;
-    }
-
-    .field-error.visible { display: block; }
-
-    /* ================================
-       INPUTS (app form)
-       ================================ */
-    .input {
-      width: 100%;
-      padding: var(--sp-3) var(--sp-4);
-      background: var(--bg-overlay);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text-primary);
-      font-size: var(--text-base);
-      transition: border-color 150ms var(--ease-out-quart);
-      outline: none;
-      min-height: 48px;
-    }
-
-    .input:focus-visible { border-color: var(--accent); }
-    .input.error { border-color: var(--danger); }
-    .input::placeholder { color: var(--text-tertiary); }
-
-    /* Remove number input spinners */
-    input[type="number"]::-webkit-inner-spin-button,
-    input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-    input[type="number"] { -moz-appearance: textfield; }
-
-    select.input {
-      appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 12px center;
-      padding-right: 40px;
-      cursor: pointer;
-    }
-
-    .input-with-prefix { position: relative; }
-
-    .input-prefix-label {
-      position: absolute;
-      left: var(--sp-3);
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: var(--text-sm);
-      color: var(--text-tertiary);
-      pointer-events: none;
-      font-family: var(--font-mono);
-    }
-
-    .input-with-prefix .input { padding-left: 38px; }
-
-    /* ================================
-       BUTTONS
-       ================================ */
-    .btn-primary {
-      padding: var(--sp-4) var(--sp-6);
-      background: var(--accent);
-      color: var(--on-accent);
-      font-size: var(--text-base);
-      font-weight: 700;
-      border-radius: 8px;
-      transition:
-        background-color 150ms var(--ease-out-quart),
-        transform 100ms var(--ease-out-quart);
-      min-height: 52px;
-      letter-spacing: 0.01em;
-    }
-
-    .btn-primary:hover  { background: var(--accent-hover); }
-    .btn-primary:active { background: var(--accent-active); transform: scale(0.98); }
-    .btn-primary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
-
-    /* ================================
-       APP SCREEN
-       ================================ */
-    #screen-app {
-      flex-direction: column;
-      padding-bottom: max(96px, calc(80px + env(safe-area-inset-bottom)));
-    }
-
-    /* ================================
-       APP HEADER — BOLDER
-       ================================ */
-    .app-header {
-      position: sticky;
-      top: 0;
-      z-index: var(--z-sticky);
-      background: var(--bg);
-      border-bottom: 1px solid var(--border-subtle);
-      padding: var(--sp-4) var(--sp-4);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: var(--sp-4);
-    }
-
-    .header-brand {
-      display: flex;
-      align-items: center;
-      gap: var(--sp-2);
-    }
-
-    .header-brand-name {
-      font-size: var(--text-lg);
-      font-weight: 900;
-      letter-spacing: -0.03em;
-    }
-
-    /* Plate badge — stands out, not just text */
-    .header-vehicle {
-      display: flex;
-      align-items: center;
-      gap: var(--sp-3);
-    }
-
-
-    .header-change-btn {
-      font-size: var(--text-xs);
-      font-weight: 600;
-      color: var(--text-tertiary);
-      padding: 0 var(--sp-3);
-      height: 30px;
-      border: 1px solid var(--border);
-      border-radius: 100px;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      transition: background 150ms, color 150ms, border-color 150ms;
-      letter-spacing: 0.02em;
-    }
-
-    .header-change-btn:hover { background: var(--bg-elevated); color: var(--text-secondary); }
-    .header-change-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 100px; }
-
-    /* ================================
-       SECTION HEADER
-       ================================ */
-    .section-header {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      padding: var(--sp-12) var(--sp-4) var(--sp-3);
-      gap: var(--sp-4);
-    }
-
-    .section-header:first-child {
-      padding-top: var(--sp-6);
-    }
-
-    .section-title {
-      font-size: var(--text-2xl);
-      font-weight: 900;
-      letter-spacing: -0.03em;
-      color: var(--text-primary);
-      line-height: 1;
-    }
-
-    .section-count {
-      font-family: var(--font-mono);
-      font-size: var(--text-xs);
-      color: var(--text-tertiary);
-      font-variant-numeric: tabular-nums;
-      flex-shrink: 0;
-      padding-bottom: 2px;
-    }
-
-    /* ================================
-       PREDICTIONS — BOLD CARDS
-       ================================ */
-    .predictions-scroll {
-      display: flex;
-      gap: var(--sp-3);
-      padding: var(--sp-2) 0 var(--sp-8);
-      padding-left: var(--sp-4);
-      overflow-x: auto;
-      scrollbar-width: none;
-      -ms-overflow-style: none;
-      scroll-snap-type: x mandatory;
-      scroll-padding-left: var(--sp-4);
-    }
-
-    .predictions-scroll::-webkit-scrollbar { display: none; }
-
-    /* trailing spacer: prevents last card from clipping */
-    .predictions-scroll::after {
-      content: '';
-      display: block;
-      min-width: var(--sp-4);
-      flex-shrink: 0;
-    }
-
-    .prediction-card {
-      flex: 0 0 auto;
-      width: 210px;
-      background: var(--bg-elevated);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: var(--sp-4);
-      scroll-snap-align: start;
-      display: flex;
-      flex-direction: column;
-      min-height: 130px;
-    }
-
-    .prediction-card[data-status="soon"]    { border-color: oklch(82% 0.145 70 / 0.6); background: var(--warning-bg); }
-    .prediction-card[data-status="overdue"] { border-color: oklch(65% 0.175 25 / 0.6); background: var(--danger-bg); }
-
-    .prediction-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--text-tertiary);
-      flex-shrink: 0;
-    }
-
-    .prediction-card[data-status="soon"]    .prediction-dot { background: var(--warning); }
-    .prediction-card[data-status="overdue"] .prediction-dot { background: var(--danger); }
-    .prediction-card[data-status="ok"]      .prediction-dot { background: var(--success); }
-
-    .prediction-top {
-      display: flex;
-      align-items: center;
-      gap: var(--sp-2);
-      margin-bottom: var(--sp-4);
-    }
-
-    .prediction-name {
-      font-size: var(--text-xs);
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--text-tertiary);
-      line-height: 1.3;
-    }
-
-    .prediction-data {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: var(--sp-2);
-    }
-
-    /* KM — hero value, status-colored */
-    .prediction-km {
-      font-family: var(--font-mono);
-      font-size: 1.45rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      font-variant-numeric: tabular-nums;
-      line-height: 1.0;
-      letter-spacing: -0.03em;
-      white-space: nowrap;
-    }
-
-    .prediction-card[data-status="overdue"] .prediction-km { color: var(--danger); }
-    .prediction-card[data-status="soon"]    .prediction-km { color: var(--warning); }
-    .prediction-card[data-status="ok"]      .prediction-km { color: var(--success); }
-
-    /* Date — secondary when both km+date exist */
-    .prediction-ou {
-      font-family: var(--font-mono);
-      font-size: var(--text-sm);
-      font-weight: 500;
-      color: var(--text-tertiary);
-      font-variant-numeric: tabular-nums;
-      letter-spacing: -0.01em;
-      margin-top: var(--sp-1);
-    }
-
-    /* Date only — shown as hero when no km */
-    .prediction-date {
-      font-family: var(--font-mono);
-      font-size: 1.45rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      font-variant-numeric: tabular-nums;
-      line-height: 1.0;
-      letter-spacing: -0.03em;
-    }
-
-    .prediction-card[data-status="overdue"] .prediction-date { color: var(--danger); }
-    .prediction-card[data-status="soon"]    .prediction-date { color: var(--warning); }
-    .prediction-card[data-status="ok"]      .prediction-date { color: var(--success); }
-
-    .prediction-sub {
-      margin-top: var(--sp-3);
-      font-size: 10px;
-      font-weight: 700;
-      color: var(--text-tertiary);
-      font-family: var(--font-mono);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-
-    .prediction-card[data-status="overdue"] .prediction-sub { color: var(--danger); }
-    .prediction-card[data-status="soon"]    .prediction-sub { color: var(--warning); }
-
-    .predictions-placeholder {
-      padding: 0 var(--sp-4) var(--sp-6);
-      font-size: var(--text-sm);
-      color: var(--text-tertiary);
-      line-height: 1.5;
-    }
-
-    /* ================================
-       DIVIDER
-       ================================ */
-    .section-divider {
-      height: 1px;
-      background: var(--border-subtle);
-      margin: var(--sp-4) var(--sp-4) 0;
-    }
-
-    /* ================================
-       TIMELINE
-       ================================ */
-    .timeline-empty {
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      padding: var(--sp-12) var(--sp-6);
-      gap: var(--sp-3);
-    }
-
-    .timeline-empty.visible { display: flex; }
-
-    .empty-icon {
-      width: 52px;
-      height: 52px;
-      border-radius: 50%;
-      background: var(--bg-elevated);
-      border: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 22px;
-    }
-
-    .empty-title {
-      font-size: var(--text-base);
-      font-weight: 600;
-      color: var(--text-secondary);
-    }
-
-    .empty-text {
-      font-size: var(--text-sm);
-      color: var(--text-tertiary);
-      max-width: 28ch;
-      line-height: 1.55;
-      font-weight: 300;
-    }
-
-    /* ================================
-       RECORD ITEMS
-       ================================ */
-    #timeline {
-      display: flex;
-      flex-direction: column;
-      gap: var(--sp-3);
-      padding: 0 var(--sp-4) var(--sp-8);
-    }
-
-    .record-item {
-      background: var(--bg-elevated);
-      border: 1px solid var(--border-subtle);
-      border-radius: 14px;
-      padding: var(--sp-4);
-      display: flex;
-      flex-direction: column;
-      gap: 0;
-      animation: record-in 380ms var(--ease-out-expo) both;
-      animation-delay: min(calc(var(--idx, 0) * 55ms), 220ms);
-    }
-
-    @keyframes record-in {
-      from { opacity: 0; transform: translateY(10px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    /* Header row: icon + name + meta */
-    .record-head {
-      display: flex;
-      align-items: center;
-      gap: var(--sp-3);
-    }
-
-    .record-icon {
-      flex-shrink: 0;
-      width: 44px;
-      height: 44px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 10px;
-      background: color-mix(in oklch, var(--svc-color, var(--accent)) 12%, var(--bg));
-      color: var(--svc-color, var(--accent));
-    }
-
-    .record-icon svg {
-      width: 20px;
-      height: 20px;
-      flex-shrink: 0;
-    }
-
-    .record-head-text {
-      flex: 1;
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-    }
-
-    .record-service {
-      font-size: var(--text-base);
-      font-weight: 700;
-      line-height: 1.2;
-      letter-spacing: -0.02em;
-      color: var(--text-primary);
-    }
-
-    .record-meta {
-      font-family: var(--font-mono);
-      font-size: 0.78rem;
-      font-weight: 500;
-      color: var(--text-tertiary);
-      font-variant-numeric: tabular-nums;
-      letter-spacing: 0.01em;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    /* Optional extra fields (cost, location, notes) */
-    .record-fields {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: var(--sp-4) var(--sp-4);
-      margin-top: var(--sp-4);
-      padding-top: var(--sp-4);
-      border-top: 1px solid var(--border-subtle);
-    }
-
-    .record-field {
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-    }
-
-    .record-field.full { grid-column: 1 / -1; }
-
-    .record-field-label {
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.09em;
-      color: var(--text-tertiary);
-    }
-
-    .record-field-value {
-      font-size: var(--text-sm);
-      color: var(--text-primary);
-      line-height: 1.3;
-    }
-
-    .record-field-value.mono {
-      font-family: var(--font-mono);
-      font-size: var(--text-base);
-      font-weight: 500;
-      font-variant-numeric: tabular-nums;
-      letter-spacing: -0.01em;
-    }
-
-    .record-field-value.accent {
-      font-family: var(--font-mono);
-      font-size: var(--text-base);
-      font-weight: 600;
-      font-variant-numeric: tabular-nums;
-      color: var(--svc-color, var(--accent));
-    }
-
-    .record-actions {
-      display: flex;
-      gap: var(--sp-2);
-      margin-top: var(--sp-4);
-      padding-top: var(--sp-3);
-      border-top: 1px solid var(--border-subtle);
-      align-items: center;
-    }
-
-    .btn-record-action {
-      width: 36px;
-      height: 36px;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--text-tertiary);
-      background: transparent;
-      transition: color 150ms, background 150ms;
-    }
-
-    .btn-record-action svg {
-      width: 16px;
-      height: 16px;
-      flex-shrink: 0;
-    }
-
-    .btn-record-action:hover         { color: var(--text-primary); background: var(--bg-overlay); }
-    .btn-record-action.delete        { margin-left: auto; }
-    .btn-record-action.delete:hover  { color: var(--danger); background: var(--danger-bg); }
-
-    /* ================================
-       FAB
-       ================================ */
-    .fab {
-      position: fixed;
-      bottom: max(var(--sp-6), calc(var(--sp-6) + env(safe-area-inset-bottom)));
-      right: var(--sp-6);
-      z-index: var(--z-fab);
-      width: 56px;
-      height: 56px;
-      border-radius: 50%;
-      background: var(--accent);
-      color: var(--on-accent);
-      font-size: 26px;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      line-height: 1;
-      box-shadow: 0 2px 8px oklch(0% 0 0 / 0.3), 0 8px 24px oklch(0% 0 0 / 0.3);
-      transition: background-color 150ms var(--ease-out-quart), transform 250ms var(--ease-out-expo);
-    }
-
-    .fab.app-visible { display: flex; }
-
-    .fab:hover { background: var(--accent-hover); }
-    .fab:active { transform: scale(0.92); }
-    .fab:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
-
-    .fab-symbol {
-      transition: transform 300ms var(--ease-out-expo);
-      display: block;
-      margin-top: -1px;
-    }
-
-    .fab.open .fab-symbol { transform: rotate(45deg); }
-
-    /* ================================
-       WIZARD — step-by-step full screen
-       ================================ */
-    .wizard {
-      position: fixed;
-      inset: 0;
-      z-index: var(--z-sheet);
-      background: var(--bg);
-      display: flex;
-      flex-direction: column;
-      transform: translateY(100%);
-      transition: transform 420ms var(--ease-out-expo);
-      overflow: hidden;
-    }
-
-    .wizard.open { transform: translateY(0); }
-
-    .wiz-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: max(var(--sp-4), env(safe-area-inset-top)) var(--sp-2) var(--sp-2);
-      flex-shrink: 0;
-    }
-
-    .wiz-btn-icon {
-      width: 44px; height: 44px;
-      display: flex; align-items: center; justify-content: center;
-      color: var(--text-secondary);
-      border-radius: 50%;
-      font-size: 18px;
-      transition: background 150ms, color 150ms;
-    }
-
-    .wiz-btn-icon:hover { background: var(--bg-overlay); color: var(--text-primary); }
-    .wiz-btn-icon:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 50%; }
-
-    .wiz-dots {
-      display: flex;
-      gap: var(--sp-2);
-      align-items: center;
-    }
-
-    .wiz-dot {
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      background: var(--border);
-      transition: background 250ms, transform 250ms, width 250ms;
-    }
-
-    .wiz-dot.active { background: var(--accent); width: 18px; border-radius: 3px; }
-    .wiz-dot.done   { background: var(--success); }
-
-    /* Steps track */
-    .wiz-track {
-      flex: 1;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .wizard-step {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      transform: translateX(100%);
-      transition: transform 360ms var(--ease-out-expo);
-      overflow-y: auto;
-      overscroll-behavior: contain;
-    }
-
-    .wizard-step.active { transform: translateX(0); }
-    .wizard-step.past   { transform: translateX(-100%); }
-
-    .wiz-content {
-      flex: 1;
-      padding: var(--sp-6) var(--sp-6) var(--sp-4);
-      display: flex;
-      flex-direction: column;
-      gap: var(--sp-6);
-    }
-
-    .wiz-eyebrow {
-      font-size: var(--text-xs);
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--text-tertiary);
-    }
-
-    .wiz-question {
-      font-size: clamp(2rem, 10vw, 3rem);
-      font-weight: 900;
-      letter-spacing: -0.04em;
-      line-height: 1.0;
-      color: var(--text-primary);
-    }
-
-    /* Service type grid */
-    .wiz-service-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: var(--sp-2);
-    }
-
-    .wiz-service-btn {
-      padding: var(--sp-3);
-      background: var(--bg-elevated);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      color: var(--text-secondary);
-      font-size: var(--text-sm);
-      font-weight: 600;
-      text-align: left;
-      line-height: 1.3;
-      transition: border-color 150ms, background 150ms, color 150ms, transform 100ms;
-      min-height: 52px;
-      display: flex;
-      align-items: center;
-      gap: var(--sp-2);
-    }
-
-    .wiz-service-btn svg {
-      width: 18px;
-      height: 18px;
-      flex-shrink: 0;
-      opacity: 0.5;
-      transition: opacity 150ms;
-    }
-
-    .wiz-service-btn:active { transform: scale(0.96); }
-
-    .wiz-service-btn.selected,
-    .wiz-service-btn:hover {
-      border-color: var(--accent);
-      background: var(--accent-bg);
-      color: var(--accent);
-    }
-
-    .wiz-service-btn.selected svg,
-    .wiz-service-btn:hover svg { opacity: 1; }
-
-    .wiz-outro-wrap {
-      display: none;
-      flex-direction: column;
-      gap: var(--sp-3);
-      margin-top: var(--sp-3);
-    }
-
-    .wiz-outro-wrap.visible { display: flex; }
-
-    .wiz-fields {
-      display: flex;
-      flex-direction: column;
-      gap: var(--sp-4);
-    }
-
-    .wiz-footer {
-      padding: var(--sp-4) var(--sp-6) max(var(--sp-8), calc(var(--sp-6) + env(safe-area-inset-bottom)));
-      display: flex;
-      gap: var(--sp-3);
-      flex-shrink: 0;
-      border-top: 1px solid var(--border-subtle);
-      background: var(--bg);
-    }
-
-    .wiz-footer .btn-primary { flex: 1; }
-
-    .btn-ghost {
-      padding: var(--sp-4) var(--sp-4);
-      color: var(--text-tertiary);
-      font-size: var(--text-base);
-      font-weight: 600;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      transition: color 150ms, border-color 150ms;
-      min-height: 52px;
-      white-space: nowrap;
-    }
-
-    .btn-ghost:hover { color: var(--text-secondary); }
-
-    .field-optional {
-      font-weight: 400;
-      text-transform: none;
-      letter-spacing: 0;
-      font-size: var(--text-xs);
-    }
-
-    /* ================================
-       TOAST
-       ================================ */
-    .toast {
-      position: fixed;
-      bottom: max(calc(var(--sp-6) + 64px), calc(80px + env(safe-area-inset-bottom)));
-      left: 50%;
-      transform: translateX(-50%) translateY(12px);
-      z-index: var(--z-toast);
-      background: var(--bg-overlay);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      gap: var(--sp-4);
-      padding: var(--sp-3) var(--sp-4);
-      font-size: var(--text-sm);
-      font-weight: 500;
-      white-space: nowrap;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 220ms var(--ease-out-quart), transform 220ms var(--ease-out-expo);
-    }
-
-    .toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
-
-    .toast-undo {
-      font-size: var(--text-xs);
-      font-weight: 700;
-      color: var(--accent);
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      padding: 0;
-      flex-shrink: 0;
-    }
-
-    .toast-undo:hover { color: var(--accent-hover); }
-
-    /* ================================
-       CONFIRM DIALOG
-       ================================ */
-    .confirm-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 500;
-      background: oklch(0% 0 0 / 0.7);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: var(--sp-6);
-    }
-
-    .confirm-overlay.visible { display: flex; }
-
-    .confirm-box {
-      background: var(--bg-elevated);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: var(--sp-6);
-      max-width: 320px;
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      gap: var(--sp-4);
-    }
-
-    .confirm-title { font-size: var(--text-base); font-weight: 700; letter-spacing: -0.01em; }
-
-    .confirm-text {
-      font-size: var(--text-sm);
-      color: var(--text-secondary);
-      line-height: 1.5;
-      font-weight: 300;
-    }
-
-    .confirm-actions { display: flex; gap: var(--sp-3); justify-content: flex-end; }
-
-    .confirm-preview {
-      font-family: var(--font-mono);
-      font-size: var(--text-sm);
-      font-weight: 600;
-      color: var(--text-primary);
-      padding: var(--sp-3) var(--sp-4);
-      background: var(--bg-overlay);
-      border-radius: 8px;
-      font-variant-numeric: tabular-nums;
-      letter-spacing: -0.01em;
-    }
-
-    .btn-ghost {
-      padding: var(--sp-3) var(--sp-4);
-      color: var(--text-secondary);
-      font-size: var(--text-sm);
-      font-weight: 600;
-      border-radius: 6px;
-      transition: background-color 150ms, color 150ms;
-      min-height: 44px;
-    }
-
-    .btn-ghost:hover { background: var(--bg-overlay); color: var(--text-primary); }
-    .btn-ghost:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-
-    .btn-danger {
-      padding: var(--sp-3) var(--sp-4);
-      background: var(--danger-bg);
-      color: var(--danger);
-      font-size: var(--text-sm);
-      font-weight: 700;
-      border-radius: 6px;
-      border: 1px solid oklch(65% 0.175 25 / 0.3);
-      transition: background-color 150ms;
-      min-height: 44px;
-    }
-
-    .btn-danger:hover { background: oklch(22% 0.075 25); }
-    .btn-danger:focus-visible { outline: 2px solid var(--danger); outline-offset: 2px; }
-
-    /* Reg screen top bar: logo left */
-    .reg-top-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-
-
-
-    /* ================================
-       ENTRANCE ANIMATIONS
-       ================================ */
-    @keyframes reg-fade-up {
-      from { opacity: 0; transform: translateY(24px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    @keyframes reg-rise {
-      from { opacity: 0; transform: translateY(100%); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    /* ================================
-       DESKTOP
-       ================================ */
-    @media (min-width: 600px) {
-      #screen-register { align-items: center; }
-      .reg-top { max-width: 460px; width: 100%; }
-      .reg-bottom { max-width: none; }
-
-      #screen-app { max-width: 460px; margin: 0 auto; }
-
-      .sheet {
-        max-width: 460px;
-        left: 50%;
-        right: auto;
-        transform: translateX(-50%) translateY(100%);
-      }
-
-      .sheet.open { transform: translateX(-50%) translateY(0); }
-      .scrim { max-width: none; left: 0; right: 0; transform: none; }
-
-      .fab { right: max(var(--sp-6), calc(50% - 230px + var(--sp-6))); }
-      .toast { bottom: max(calc(var(--sp-8) + 64px), 88px); }
-    }
-
-    /* ================================
-       REDUCED MOTION
-       ================================ */
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after {
-        animation-duration: 0.01ms !important;
-        transition-duration: 0.01ms !important;
-      }
-    }
-  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@300..900&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   TOKENS
+   ============================================================ */
+:root {
+  --ground:      #FBFAF7;
+  --surface:     #FFFFFF;
+  --surface-2:   #F4F2EC;
+  --surface-3:   #EDEAE2;
+  --line:        #E4E0D6;
+  --line-soft:   #EFECE4;
+  --ink:         #1B1A17;
+  --ink-2:       #57534A;
+  --ink-3:       #8C877B;
+
+  --amber:       #B47A00;
+  --amber-pure:  #F5B01A;
+  --amber-soft:  #FDF3DA;
+  --amber-line:  #EBD49A;
+
+  --green:       #1B7F43;
+  --green-pure:  #22A757;
+  --green-soft:  #E3F2E8;
+
+  --red:         #BE3A30;
+  --red-pure:    #DB4C40;
+  --red-soft:    #FBE8E6;
+
+  --slate:       #3D6A99;
+  --slate-soft:  #EAF1F8;
+
+  --r-sm: 8px; --r-md: 12px; --r-lg: 16px; --r-xl: 22px;
+
+  --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px;
+  --sp-5: 20px; --sp-6: 24px; --sp-8: 32px; --sp-12: 48px; --sp-16: 64px;
+
+  --font: 'Google Sans Flex', -apple-system, 'Segoe UI', system-ui, sans-serif;
+
+  --ease: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --z-fab: 150; --z-sheet: 300; --z-toast: 400;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { font-size: 16px; -webkit-text-size-adjust: 100%; }
+
+body {
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100dvh;
+}
+
+button { font-family: inherit; cursor: pointer; border: 0; background: none; color: inherit; }
+input { font-family: inherit; }
+svg { display: block; }
+
+:focus-visible { outline: 2px solid var(--amber-pure); outline-offset: 2px; border-radius: 4px; }
+
+.num { font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+
+/* ============================================================
+   TELAS
+   ============================================================ */
+.screen { display: none; }
+.screen.active { display: block; }
+
+.shell { max-width: 560px; margin: 0 auto; }
+
+/* ============================================================
+   SELETOR DE VEÍCULO
+   ============================================================ */
+/* O display fica preso ao .active: um seletor de id solto aqui venceria
+   o .screen{display:none} por especificidade e a tela nunca se esconderia. */
+#screen-picker { min-height: 100dvh; }
+#screen-picker.active { display: flex; flex-direction: column; }
+
+.pick-top {
+  flex: 1;
+  padding: max(var(--sp-12), env(safe-area-inset-top)) var(--sp-6) var(--sp-8);
+  display: flex; flex-direction: column; justify-content: center; gap: var(--sp-5);
+  max-width: 560px; margin: 0 auto; width: 100%;
+}
+
+.brand { display: flex; align-items: center; gap: var(--sp-2); }
+.brand svg { width: 30px; height: 30px; }
+.brand-name {
+  font-size: 15px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+}
+
+.pick-title {
+  font-size: clamp(32px, 9vw, 44px); font-weight: 800;
+  letter-spacing: -0.035em; line-height: 1.05; text-wrap: balance;
+}
+.pick-title em { font-style: normal; color: var(--amber); }
+.pick-sub { color: var(--ink-2); font-size: 15.5px; max-width: 34ch; }
+
+.pick-bottom {
+  background: var(--surface); border-top: 1px solid var(--line);
+  padding: var(--sp-6) var(--sp-6) max(var(--sp-8), calc(var(--sp-6) + env(safe-area-inset-bottom)));
+}
+.pick-list {
+  display: flex; flex-direction: column; gap: var(--sp-3);
+  max-width: 560px; margin: 0 auto;
+}
+
+.veic-card {
+  display: flex; align-items: center; gap: var(--sp-4);
+  width: 100%; text-align: left;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--ground); border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  transition: border-color 160ms var(--ease), transform 160ms var(--ease);
+}
+.veic-card:hover { border-color: var(--amber-pure); }
+.veic-card:active { transform: scale(0.985); }
+
+.veic-foto { width: 104px; height: 72px; flex: none; }
+.veic-foto img {
+  width: 100%; height: 100%; object-fit: contain;
+  filter: drop-shadow(0 4px 8px rgb(27 26 23 / 0.2));
+}
+
+.veic-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.veic-nome { font-size: 16.5px; font-weight: 700; letter-spacing: -0.02em; }
+.veic-det { font-size: 12px; color: var(--ink-3); }
+.veic-km { font-size: 12.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+
+/* ============================================================
+   CABEÇALHO DO APP
+   ============================================================ */
+.app-head {
+  position: sticky; top: 0; z-index: 100;
+  background: color-mix(in srgb, var(--ground) 88%, transparent);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--line);
+  padding: max(var(--sp-3), env(safe-area-inset-top)) var(--sp-4) var(--sp-3);
+}
+.app-head-in {
+  max-width: 560px; margin: 0 auto;
+  display: flex; align-items: center; gap: var(--sp-3);
+}
+.head-foto { width: 52px; height: 36px; flex: none; }
+/* object-fit garante o encaixe: só max-width/max-height deixa a imagem
+   retrato (a moto) estourar a altura da caixa. */
+.head-foto img { width: 100%; height: 100%; object-fit: contain; }
+.head-txt { flex: 1; min-width: 0; }
+.head-nome { font-size: 15px; font-weight: 700; letter-spacing: -0.02em; }
+.head-det { font-size: 11.5px; color: var(--ink-3); }
+
+.btn-trocar {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 12.5px; font-weight: 600; color: var(--ink-2);
+  padding: 7px 12px; border: 1px solid var(--line); border-radius: 999px;
+  background: var(--surface); flex: none;
+}
+.btn-trocar svg { width: 13px; height: 13px; }
+.btn-trocar:hover { border-color: var(--amber-pure); color: var(--ink); }
+
+/* ============================================================
+   CORPO
+   ============================================================ */
+.body { padding: var(--sp-5) var(--sp-4) 120px; max-width: 560px; margin: 0 auto; }
+
+.bloco { margin-bottom: var(--sp-8); }
+
+.bloco-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: var(--sp-3); margin-bottom: var(--sp-4);
+}
+.bloco-titulo { font-size: 19px; font-weight: 700; letter-spacing: -0.025em; }
+.bloco-conta { font-size: 12.5px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+
+.card {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--r-lg); padding: var(--sp-5);
+}
+
+/* ---------- Hodômetro ---------- */
+.odo {
+  display: flex; align-items: center; gap: var(--sp-3); width: 100%;
+  padding: var(--sp-3) var(--sp-4); margin-bottom: var(--sp-5);
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md);
+  transition: border-color 160ms var(--ease);
+}
+.odo:hover { border-color: var(--amber-pure); }
+.odo-label { font-size: 12px; color: var(--ink-3); }
+.odo-valor {
+  margin-left: auto; font-size: 15px; font-weight: 700;
+  font-variant-numeric: tabular-nums; letter-spacing: -0.02em;
+}
+.odo-valor.vazio { color: var(--ink-3); font-weight: 400; letter-spacing: 0; }
+.odo svg { width: 14px; height: 14px; color: var(--ink-3); flex: none; }
+
+/* ---------- Aviso offline ---------- */
+.offline {
+  display: none; margin-bottom: var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--surface-2); border: 1px solid var(--line);
+  border-radius: var(--r-md); font-size: 12.5px; color: var(--ink-2);
+}
+.offline.on { display: block; }
+
+/* ---------- Barra de situação ---------- */
+.sit-bar { display: flex; gap: 4px; height: 28px; margin-bottom: var(--sp-4); }
+.sit-seg { border-radius: var(--r-sm); position: relative; overflow: hidden; min-width: 6px; }
+.sit-seg::after {
+  content: ''; position: absolute; inset: 0;
+  background: repeating-linear-gradient(115deg, rgb(255 255 255 / 0.42) 0 2px, transparent 2px 6px);
+}
+.sit-late { background: var(--red-pure); }
+.sit-soon { background: var(--amber-pure); }
+.sit-ok   { background: var(--green-pure); }
+.sit-none { background: var(--ink-3); opacity: 0.4; }
+
+.sit-legenda { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-2) var(--sp-5); }
+.leg { display: flex; align-items: baseline; gap: var(--sp-2); font-size: 13px; }
+.leg i { width: 3px; height: 12px; border-radius: 2px; flex: none; transform: translateY(2px); }
+.leg-nome { color: var(--ink-2); }
+.leg-val { margin-left: auto; font-weight: 700; font-variant-numeric: tabular-nums; }
+.leg-pct { color: var(--ink-3); font-size: 12px; font-weight: 400; }
+
+/* ---------- Avisos acionáveis ---------- */
+.avisos { display: flex; flex-direction: column; gap: var(--sp-3); margin-bottom: var(--sp-5); }
+.aviso {
+  display: flex; gap: var(--sp-3); align-items: flex-start;
+  background: var(--amber-soft); border: 1px solid var(--amber-line);
+  border-radius: var(--r-md); padding: var(--sp-4);
+  font-size: 13.5px; color: var(--ink-2); line-height: 1.45;
+}
+.aviso svg { width: 17px; height: 17px; color: var(--amber); flex: none; margin-top: 1px; }
+.aviso b { color: var(--ink); font-weight: 700; }
+.aviso.alerta { background: var(--red-soft); border-color: color-mix(in srgb, var(--red) 32%, transparent); }
+.aviso.alerta svg { color: var(--red); }
+
+/* ---------- Previsões ---------- */
+.prev-scroll {
+  display: flex; gap: var(--sp-3); overflow-x: auto;
+  padding-bottom: var(--sp-2);
+  margin: 0 calc(var(--sp-4) * -1); padding-left: var(--sp-4); padding-right: var(--sp-4);
+  scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch;
+}
+.prev-scroll::-webkit-scrollbar { height: 0; }
+
+.prev {
+  flex: none; width: 170px; scroll-snap-align: start;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--r-md); padding: var(--sp-4);
+  display: flex; flex-direction: column; gap: 3px;
+}
+.prev[data-s="soon"] { background: var(--amber-soft); border-color: var(--amber-line); }
+.prev[data-s="late"] { background: var(--red-soft); border-color: color-mix(in srgb, var(--red) 32%, transparent); }
+.prev[data-s="none"] { border-style: dashed; background: transparent; }
+
+.prev-nome { font-size: 13px; font-weight: 600; line-height: 1.3; letter-spacing: -0.005em; }
+.prev-valor {
+  font-size: 19px; font-weight: 700; letter-spacing: -0.035em;
+  font-variant-numeric: tabular-nums; line-height: 1.2;
+}
+.prev[data-s="ok"]   .prev-valor { color: var(--green); }
+.prev[data-s="soon"] .prev-valor { color: var(--amber); }
+.prev[data-s="late"] .prev-valor { color: var(--red); }
+.prev[data-s="none"] .prev-valor { color: var(--ink-3); font-size: 13px; font-weight: 500; letter-spacing: 0; }
+.prev-sub { font-size: 11.5px; color: var(--ink-3); }
+
+.medidor-wrap { margin-top: auto; padding-top: var(--sp-4); display: flex; flex-direction: column; gap: 5px; }
+.medidor {
+  height: 6px; border-radius: 3px; overflow: hidden; display: block;
+  background: color-mix(in srgb, var(--ink-3) 22%, transparent);
+}
+.medidor-fill { display: block; height: 100%; border-radius: 3px; position: relative; }
+.medidor-fill::after {
+  content: ''; position: absolute; inset: 0;
+  background: repeating-linear-gradient(115deg, rgb(255 255 255 / 0.42) 0 2px, transparent 2px 6px);
+}
+.prev[data-s="ok"]   .medidor-fill { background: var(--green-pure); }
+.prev[data-s="soon"] .medidor-fill { background: var(--amber-pure); }
+.prev[data-s="late"] .medidor-fill { background: var(--red-pure); }
+.prev[data-s="none"] .medidor { background: transparent; border: 1px dashed var(--line); }
+.prev-pe { font-size: 10.5px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+
+.vazio-msg {
+  padding: var(--sp-5); background: var(--surface-2);
+  border-radius: var(--r-md); font-size: 13.5px; color: var(--ink-2); text-align: center;
+}
+
+/* ---------- Estatísticas ---------- */
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-4) var(--sp-5); }
+.stat-k { font-size: 11.5px; color: var(--ink-3); display: block; margin-bottom: 3px; }
+.stat-v {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 19px; font-weight: 700; letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+.stat-v svg { width: 15px; height: 15px; color: var(--ink-3); flex: none; }
+.stat-v small { font-size: 12.5px; font-weight: 400; color: var(--ink-3); letter-spacing: 0; }
+
+/* ---------- Ficha técnica ---------- */
+/* Uma coluna no celular: rótulo + valor em duas colunas a 390px espreme
+   o valor e quebra "0,80 L · 10W-40" no meio. */
+.ficha-grid { display: grid; grid-template-columns: 1fr; gap: var(--sp-3); }
+@media (min-width: 460px) {
+  .ficha-grid { grid-template-columns: 1fr 1fr; gap: var(--sp-3) var(--sp-5); }
+}
+.ficha-row { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-2); font-size: 13px; }
+.ficha-k { color: var(--ink-3); }
+.ficha-v { font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
+
+.hr { height: 1px; background: var(--line); margin: var(--sp-4) 0; }
+
+.selo {
+  display: inline-block; font-size: 9.5px; font-weight: 700;
+  letter-spacing: 0.07em; text-transform: uppercase;
+  padding: 2px 6px; border-radius: 4px;
+}
+.selo-manual { background: var(--slate-soft); color: var(--slate); }
+.selo-rede   { background: var(--surface-3); color: var(--ink-3); }
+
+/* ---------- Problemas crônicos ---------- */
+.acc { display: flex; flex-direction: column; gap: var(--sp-2); }
+.acc-item {
+  border: 1px solid var(--line); border-radius: var(--r-md);
+  background: var(--surface); overflow: hidden;
+}
+.acc-item.open { border-color: var(--amber-line); }
+.acc-head {
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4); width: 100%; text-align: left;
+  font-size: 13.5px; font-weight: 600; line-height: 1.3;
+}
+.acc-ico {
+  width: 30px; height: 30px; border-radius: 9px; flex: none;
+  display: grid; place-items: center;
+  background: var(--red-soft); color: var(--red);
+}
+.acc-ico svg { width: 16px; height: 16px; }
+.acc-chev { margin-left: auto; color: var(--ink-3); flex: none; transition: transform 200ms var(--ease); }
+.acc-chev svg { width: 15px; height: 15px; }
+.acc-item.open .acc-chev { transform: rotate(180deg); }
+.acc-body { padding: 0 var(--sp-4) var(--sp-4); font-size: 13px; color: var(--ink-2); line-height: 1.5; }
+.acc-item:not(.open) .acc-body { display: none; }
+.acc-rec {
+  margin-top: var(--sp-3);
+  background: var(--amber-soft); border: 1px solid var(--amber-line);
+  border-radius: 10px; padding: var(--sp-3) var(--sp-4);
+}
+.acc-rec-t {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--amber); margin-bottom: 3px;
+}
+
+/* ---------- Histórico: eixo do hodômetro ---------- */
+.hist { display: flex; flex-direction: column; }
+.hist-row {
+  display: grid; grid-template-columns: 74px 18px minmax(0, 1fr) auto;
+  column-gap: var(--sp-3); align-items: stretch;
+}
+.hist-odo { text-align: right; padding-top: 1px; display: flex; flex-direction: column; }
+.hist-km {
+  font-size: 14.5px; font-weight: 700; letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums; line-height: 1.25;
+}
+.hist-data { font-size: 11px; color: var(--ink-3); font-variant-numeric: tabular-nums; line-height: 1.3; }
+
+.hist-eixo { position: relative; display: flex; justify-content: center; }
+.hist-eixo::before {
+  content: ''; position: absolute; top: 10px; bottom: 0; width: 2px;
+  left: 50%; transform: translateX(-50%); background: var(--line);
+}
+.hist-row:last-child .hist-eixo::before { display: none; }
+.hist-dot {
+  width: 12px; height: 12px; border-radius: 50%; margin-top: 4px; flex: none;
+  background: var(--surface); box-shadow: inset 0 0 0 3px var(--svc, var(--ink-3));
+  position: relative; z-index: 1;
+}
+
+.hist-body { padding-bottom: var(--sp-5); min-width: 0; }
+.hist-nome { font-size: 14px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.3; }
+.hist-meta { font-size: 12px; color: var(--ink-3); line-height: 1.45; }
+.hist-custo {
+  font-size: 13.5px; font-weight: 700; letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums; white-space: nowrap; padding-top: 1px;
+}
+.hist-gap {
+  margin-top: var(--sp-2); font-size: 11px; color: var(--ink-3);
+  display: flex; align-items: center; gap: 5px;
+}
+.hist-gap b { font-weight: 600; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.hist-gap svg { width: 11px; height: 11px; flex: none; }
+
+.hist-acoes { display: flex; gap: var(--sp-1); margin-top: var(--sp-2); }
+.btn-acao {
+  width: 28px; height: 28px; border-radius: 7px;
+  display: grid; place-items: center; color: var(--ink-3);
+  border: 1px solid transparent;
+}
+.btn-acao svg { width: 14px; height: 14px; }
+.btn-acao:hover { background: var(--surface-2); border-color: var(--line); color: var(--ink); }
+.btn-acao.del:hover { background: var(--red-soft); border-color: color-mix(in srgb, var(--red) 30%, transparent); color: var(--red); }
+
+/* ============================================================
+   FAB
+   ============================================================ */
+.fab {
+  position: fixed; right: var(--sp-5);
+  bottom: max(var(--sp-6), calc(var(--sp-4) + env(safe-area-inset-bottom)));
+  z-index: var(--z-fab);
+  display: none; align-items: center; gap: var(--sp-2);
+  padding: 14px 20px; border-radius: 999px;
+  background: var(--amber-pure); color: #1B1A17;
+  font-size: 14.5px; font-weight: 700; letter-spacing: -0.01em;
+  box-shadow: 0 4px 14px rgb(27 26 23 / 0.18), 0 1px 3px rgb(27 26 23 / 0.12);
+  transition: transform 180ms var(--ease);
+}
+.fab.on { display: inline-flex; }
+.fab:active { transform: scale(0.95); }
+.fab svg { width: 17px; height: 17px; }
+
+/* ============================================================
+   WIZARD
+   ============================================================ */
+.wiz {
+  position: fixed; inset: 0; z-index: var(--z-sheet);
+  background: var(--ground);
+  transform: translateY(100%); transition: transform 380ms var(--ease-expo);
+  display: flex; flex-direction: column;
+  visibility: hidden;
+}
+.wiz.open { transform: translateY(0); visibility: visible; }
+
+.wiz-head {
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: max(var(--sp-4), env(safe-area-inset-top)) var(--sp-4) var(--sp-3);
+  border-bottom: 1px solid var(--line);
+}
+.wiz-btn {
+  width: 36px; height: 36px; border-radius: 50%;
+  display: grid; place-items: center; color: var(--ink-2);
+  border: 1px solid var(--line); background: var(--surface); flex: none;
+}
+.wiz-btn svg { width: 17px; height: 17px; }
+.wiz-pontos { display: flex; gap: 6px; margin: 0 auto; }
+.wiz-ponto { width: 7px; height: 7px; border-radius: 50%; background: var(--line); transition: all 200ms var(--ease); }
+.wiz-ponto.ativo { background: var(--amber-pure); width: 20px; border-radius: 4px; }
+.wiz-ponto.feito { background: var(--ink-3); }
+
+.wiz-corpo { flex: 1; overflow-y: auto; padding: var(--sp-6) var(--sp-4); }
+.wiz-in { max-width: 560px; margin: 0 auto; }
+.wiz-passo { display: none; }
+.wiz-passo.ativo { display: block; }
+
+.wiz-eyebrow { font-size: 11.5px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); margin-bottom: var(--sp-2); }
+.wiz-pergunta { font-size: 26px; font-weight: 800; letter-spacing: -0.035em; line-height: 1.1; margin-bottom: var(--sp-6); }
+
+.serv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--sp-2); }
+.serv-btn {
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: var(--sp-3); text-align: left;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md);
+  font-size: 13px; font-weight: 600; line-height: 1.25;
+  transition: border-color 140ms var(--ease), background 140ms var(--ease);
+}
+.serv-btn svg { width: 19px; height: 19px; flex: none; color: var(--svc, var(--ink-3)); }
+.serv-btn:hover { border-color: var(--amber-pure); }
+.serv-btn.sel { background: var(--amber-soft); border-color: var(--amber-pure); }
+
+.campos { display: flex; flex-direction: column; gap: var(--sp-4); }
+.campo { display: flex; flex-direction: column; gap: 6px; }
+.campo-label { font-size: 12.5px; font-weight: 600; color: var(--ink-2); }
+.campo-op { color: var(--ink-3); font-weight: 400; }
+
+.input {
+  width: 100%; padding: 13px var(--sp-4);
+  font-size: 16px; color: var(--ink);
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  transition: border-color 140ms var(--ease);
+}
+.input:focus { outline: none; border-color: var(--amber-pure); box-shadow: 0 0 0 3px var(--amber-soft); }
+.input.erro { border-color: var(--red-pure); }
+.input::placeholder { color: var(--ink-3); }
+
+.erro-msg { display: none; font-size: 12px; color: var(--red); }
+.erro-msg.on { display: block; }
+
+.wiz-pe {
+  padding: var(--sp-4);
+  padding-bottom: max(var(--sp-4), calc(var(--sp-3) + env(safe-area-inset-bottom)));
+  border-top: 1px solid var(--line); background: var(--surface);
+  display: flex; gap: var(--sp-3);
+}
+.wiz-pe-in { max-width: 560px; margin: 0 auto; width: 100%; display: flex; gap: var(--sp-3); }
+
+.btn {
+  flex: 1; padding: 14px var(--sp-5); border-radius: var(--r-md);
+  font-size: 15px; font-weight: 700; letter-spacing: -0.01em;
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+  transition: transform 140ms var(--ease);
+}
+.btn:active { transform: scale(0.985); }
+.btn-primario { background: var(--amber-pure); border-color: var(--amber-pure); color: #1B1A17; }
+.btn-perigo { background: var(--red-pure); border-color: var(--red-pure); color: #fff; }
+
+/* ============================================================
+   CONFIRMAÇÃO
+   ============================================================ */
+.overlay {
+  position: fixed; inset: 0; z-index: var(--z-sheet);
+  background: rgb(27 26 23 / 0.42);
+  display: none; align-items: center; justify-content: center; padding: var(--sp-5);
+}
+.overlay.on { display: flex; }
+.dialogo {
+  background: var(--surface); border-radius: var(--r-lg);
+  padding: var(--sp-6); max-width: 380px; width: 100%;
+  display: flex; flex-direction: column; gap: var(--sp-3);
+}
+.dialogo-t { font-size: 18px; font-weight: 700; letter-spacing: -0.02em; }
+.dialogo-p { font-size: 13.5px; color: var(--ink-2); }
+.dialogo-prev {
+  font-size: 13px; padding: var(--sp-3); background: var(--surface-2);
+  border-radius: var(--r-sm); font-variant-numeric: tabular-nums;
+}
+.dialogo-acoes { display: flex; gap: var(--sp-3); margin-top: var(--sp-2); }
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+.toast {
+  position: fixed; left: 50%; z-index: var(--z-toast);
+  bottom: max(var(--sp-8), calc(var(--sp-6) + env(safe-area-inset-bottom)));
+  transform: translate(-50%, 20px); opacity: 0; pointer-events: none;
+  display: flex; align-items: center; gap: var(--sp-4);
+  background: var(--ink); color: var(--ground);
+  padding: 13px var(--sp-5); border-radius: 999px;
+  font-size: 13.5px; font-weight: 500;
+  box-shadow: 0 6px 22px rgb(27 26 23 / 0.26);
+  transition: opacity 240ms var(--ease), transform 240ms var(--ease);
+  max-width: calc(100vw - var(--sp-8));
+}
+.toast.on { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+.toast-undo { font-weight: 700; color: var(--amber-pure); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 1ms !important; animation-duration: 1ms !important; }
+}
+</style>
 </head>
 <body>
 
-<!-- =====================
-     REGISTRATION SCREEN
-     ===================== -->
-<section id="screen-register" class="screen" role="main" aria-labelledby="reg-title">
-
-  <!-- Top zone: brand + hero text -->
-  <div class="reg-top">
-    <div class="reg-top-bar">
-      <div class="logo" aria-hidden="true">
-        <svg class="logo-svg" viewBox="0 0 188.9 122.08" xmlns="http://www.w3.org/2000/svg">
-          <rect fill="var(--text-secondary)" x="0" y="34.56" width="22.99" height="11.25" rx="5.62" ry="5.62"/>
-          <path fill="none" stroke="var(--text-primary)" stroke-linecap="round" stroke-linejoin="round" stroke-width="10" d="M162.82,26.94s-6.36-21.83-29.64-21.83h-65.05s-27.59-3.01-33.85,21.83-20.35,30.12-20.35,30.12c0,0-10.57,6.26-8.22,22.5v32.87"/>
-          <path fill="var(--accent)" d="M152.69,86.48c-.01.26-.01.49-.01.68s0,.42.01.68c.12,4.16,2.07,16.44,20.76,16.44h15.45v.59s-9.78,17.21-30.32,17.21-27-15.45-27-15.45c0,0-2.74-9.59-18.4-9.59H44.95c-1.43,0-2.59-1.16-2.59-2.59v-14.58c0-1.43,1.16-2.59,2.59-2.59h68.23c15.66,0,18.4-9.59,18.4-9.59,0,0,6.45-15.45,27-15.45s30.32,17.21,30.32,17.21v.59h-15.45c-18.69,0-20.64,12.28-20.76,16.44Z"/>
-        </svg>
-        <span class="logo-name">PrevCar</span>
-      </div>
+<!-- ============================================================
+     TELA 1 — SELETOR
+     ============================================================ -->
+<section id="screen-picker" class="screen" role="main" aria-labelledby="pick-title">
+  <div class="pick-top">
+    <div class="brand">
+      <svg viewBox="0 0 188.9 122.08" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect fill="var(--ink-3)" x="0" y="34.56" width="22.99" height="11.25" rx="5.62"/>
+        <path fill="none" stroke="var(--ink)" stroke-linecap="round" stroke-linejoin="round" stroke-width="10" d="M162.82,26.94s-6.36-21.83-29.64-21.83h-65.05s-27.59-3.01-33.85,21.83-20.35,30.12-20.35,30.12c0,0-10.57,6.26-8.22,22.5v32.87"/>
+        <path fill="var(--amber-pure)" d="M152.69,86.48c-.01.26-.01.49-.01.68s0,.42.01.68c.12,4.16,2.07,16.44,20.76,16.44h15.45v.59s-9.78,17.21-30.32,17.21-27-15.45-27-15.45c0,0-2.74-9.59-18.4-9.59H44.95c-1.43,0-2.59-1.16-2.59-2.59v-14.58c0-1.43,1.16-2.59,2.59-2.59h68.23c15.66,0,18.4-9.59,18.4-9.59,0,0,6.45-15.45,27-15.45s30.32,17.21,30.32,17.21v.59h-15.45c-18.69,0-20.64,12.28-20.76,16.44Z"/>
+      </svg>
+      <span class="brand-name">PrevCar</span>
     </div>
-
-    <div class="reg-hero">
-      <h1 class="reg-title" id="reg-title">
-        Controle<br>a <span class="reg-title-accent">manutenção</span><br>do seu veículo.
-      </h1>
-      <p class="reg-subtitle">
-        Registre serviços e reparos. Saiba quando a próxima revisão está chegando.
-      </p>
-    </div>
+    <h1 class="pick-title" id="pick-title">A <em>manutenção</em><br>dos nossos<br>veículos.</h1>
+    <p class="pick-sub">Escolha o veículo para ver o que está por vencer e registrar um serviço.</p>
   </div>
 
-  <!-- Bottom zone: form on elevated surface -->
-  <div class="reg-bottom">
-    <form class="reg-form" id="form-register" novalidate>
-      <div class="field-row">
-        <div class="field">
-          <label class="field-label" for="input-marca">Marca</label>
-          <input
-            type="text"
-            id="input-marca"
-            class="input"
-            placeholder="Ex: Honda"
-            autocomplete="off"
-            list="marcas-list"
-            aria-describedby="marca-error"
-          >
-          <datalist id="marcas-list">
-            <option value="Chevrolet">
-            <option value="Citroën">
-            <option value="Fiat">
-            <option value="Ford">
-            <option value="Honda">
-            <option value="Hyundai">
-            <option value="Jeep">
-            <option value="Kia">
-            <option value="Mitsubishi">
-            <option value="Nissan">
-            <option value="Peugeot">
-            <option value="Renault">
-            <option value="Toyota">
-            <option value="Volkswagen">
-          </datalist>
-          <span class="field-error" id="marca-error" role="alert">Informe a marca.</span>
-        </div>
-        <div class="field">
-          <label class="field-label" for="input-ano">Ano</label>
-          <input
-            type="number"
-            id="input-ano"
-            class="input"
-            placeholder="2020"
-            min="1970"
-            max="2026"
-            inputmode="numeric"
-            aria-describedby="ano-error"
-          >
-          <span class="field-error" id="ano-error" role="alert">Ano inválido.</span>
-        </div>
-      </div>
-
-      <div class="field">
-        <label class="field-label" for="input-modelo">Modelo</label>
-        <input
-          type="text"
-          id="input-modelo"
-          class="input"
-          placeholder="Ex: Civic EXL 1.5 Turbo"
-          autocomplete="off"
-          aria-describedby="modelo-error"
-        >
-        <span class="field-error" id="modelo-error" role="alert">Informe o modelo.</span>
-      </div>
-
-      <div class="field">
-        <label class="field-label" for="input-placa">Placa</label>
-        <input
-          type="text"
-          id="input-placa"
-          class="input input-placa"
-          placeholder="ABC1D23"
-          autocomplete="off"
-          maxlength="7"
-          inputmode="text"
-          aria-describedby="placa-error"
-        >
-        <span class="field-error" id="placa-error" role="alert">Placa inválida.</span>
-      </div>
-
-      <button type="submit" class="btn-primary" id="btn-register">
-        Começar a registrar
-      </button>
-    </form>
+  <div class="pick-bottom">
+    <div class="pick-list" id="pick-list"></div>
   </div>
-
 </section>
 
-<!-- =====================
-     MAIN APP SCREEN
-     ===================== -->
-<section id="screen-app" class="screen" role="main" aria-label="PrevCar">
-
-  <header class="app-header">
-    <div class="header-brand">
-      <svg class="logo-svg" viewBox="0 0 188.9 122.08" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <rect fill="var(--text-secondary)" x="0" y="34.56" width="22.99" height="11.25" rx="5.62" ry="5.62"/>
-        <path fill="none" stroke="var(--text-primary)" stroke-linecap="round" stroke-linejoin="round" stroke-width="10" d="M162.82,26.94s-6.36-21.83-29.64-21.83h-65.05s-27.59-3.01-33.85,21.83-20.35,30.12-20.35,30.12c0,0-10.57,6.26-8.22,22.5v32.87"/>
-        <path fill="var(--accent)" d="M152.69,86.48c-.01.26-.01.49-.01.68s0,.42.01.68c.12,4.16,2.07,16.44,20.76,16.44h15.45v.59s-9.78,17.21-30.32,17.21-27-15.45-27-15.45c0,0-2.74-9.59-18.4-9.59H44.95c-1.43,0-2.59-1.16-2.59-2.59v-14.58c0-1.43,1.16-2.59,2.59-2.59h68.23c15.66,0,18.4-9.59,18.4-9.59,0,0,6.45-15.45,27-15.45s30.32,17.21,30.32,17.21v.59h-15.45c-18.69,0-20.64,12.28-20.76,16.44Z"/>
-      </svg>
-      <span class="header-brand-name">PrevCar</span>
-    </div>
-    <div class="header-vehicle">
-      <span class="header-car-info" id="header-car-info"></span>
-      <button class="header-change-btn" id="btn-change-car" aria-label="Trocar veículo">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+<!-- ============================================================
+     TELA 2 — APP
+     ============================================================ -->
+<section id="screen-app" class="screen" role="main">
+  <header class="app-head">
+    <div class="app-head-in">
+      <div class="head-foto"><img id="head-img" src="" alt=""></div>
+      <div class="head-txt">
+        <div class="head-nome" id="head-nome"></div>
+        <div class="head-det" id="head-det"></div>
+      </div>
+      <button class="btn-trocar" id="btn-trocar" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
         trocar
       </button>
     </div>
   </header>
 
-  <div>
-    <!-- Predictions -->
-    <div class="section-header">
-      <h2 class="section-title">Próximas revisões</h2>
-    </div>
+  <div class="body">
+    <p class="offline" id="offline">Sem conexão — mostrando o que está salvo neste aparelho.</p>
 
-    <div id="predictions-empty" class="predictions-placeholder">
-      Adicione seu primeiro registro para ver as previsões de manutenção.
-    </div>
-    <div
-      id="predictions-scroll"
-      class="predictions-scroll"
-      role="list"
-      aria-label="Previsões de manutenção"
-      style="display:none"
-    ></div>
+    <button class="odo" id="odo" type="button">
+      <span class="odo-label">Hodômetro hoje</span>
+      <span class="odo-valor vazio" id="odo-valor">definir km</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>
+    </button>
 
-    <div class="section-divider"></div>
+    <div class="avisos" id="avisos"></div>
 
-    <!-- Timeline -->
-    <div class="section-header">
-      <h2 class="section-title">Histórico</h2>
-      <span class="section-count" id="record-count" aria-live="polite"></span>
-    </div>
+    <section class="bloco">
+      <div class="bloco-head"><h2 class="bloco-titulo">Situação do plano</h2></div>
+      <div class="card">
+        <div class="sit-bar" id="sit-bar" role="img"></div>
+        <div class="sit-legenda" id="sit-legenda"></div>
+      </div>
+    </section>
 
-    <div class="timeline-empty" id="timeline-empty" role="status">
-      <div class="empty-icon" aria-hidden="true">🔧</div>
-      <p class="empty-title">Nenhum registro ainda</p>
-      <p class="empty-text">
-        Toque no botão <strong>+</strong> para registrar o primeiro serviço do seu veículo.
-      </p>
-    </div>
+    <section class="bloco">
+      <div class="bloco-head"><h2 class="bloco-titulo">Próximos serviços</h2></div>
+      <div class="prev-scroll" id="prev-scroll" role="list"></div>
+    </section>
 
-    <div id="timeline" role="list" aria-label="Histórico de manutenções"></div>
+    <section class="bloco" id="bloco-stats" hidden>
+      <div class="bloco-head"><h2 class="bloco-titulo">Números</h2></div>
+      <div class="card"><div class="stats" id="stats"></div></div>
+    </section>
+
+    <section class="bloco">
+      <div class="bloco-head"><h2 class="bloco-titulo">Ficha técnica</h2></div>
+      <div class="card">
+        <div class="ficha-grid" id="ficha"></div>
+      </div>
+    </section>
+
+    <section class="bloco">
+      <div class="bloco-head">
+        <h2 class="bloco-titulo">Atenções conhecidas</h2>
+        <span class="bloco-conta" id="cronicos-conta"></span>
+      </div>
+      <div class="acc" id="cronicos"></div>
+    </section>
+
+    <section class="bloco">
+      <div class="bloco-head">
+        <h2 class="bloco-titulo">Histórico</h2>
+        <span class="bloco-conta" id="hist-conta"></span>
+      </div>
+      <div class="hist" id="hist"></div>
+      <div class="vazio-msg" id="hist-vazio">Nenhum serviço registrado ainda. Toque em <strong>Registrar</strong> para começar.</div>
+    </section>
   </div>
-
 </section>
 
-<!-- =====================
-     FAB
-     ===================== -->
-<button
-  class="fab"
-  id="fab"
-  aria-label="Registrar novo serviço"
-  aria-expanded="false"
->
-  <span class="fab-symbol" aria-hidden="true">+</span>
+<button class="fab" id="fab" type="button" aria-label="Registrar serviço">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+  Registrar
 </button>
 
-<!-- =====================
+<!-- ============================================================
      WIZARD
-     ===================== -->
-<div id="wizard" class="wizard" role="dialog" aria-modal="true" aria-label="Registrar serviço">
-
-  <div class="wiz-header">
-    <button class="wiz-btn-icon" id="wiz-back" aria-label="Voltar">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+     ============================================================ -->
+<div class="wiz" id="wiz" role="dialog" aria-modal="true" aria-label="Registrar serviço">
+  <div class="wiz-head">
+    <button class="wiz-btn" id="wiz-voltar" type="button" aria-label="Voltar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
     </button>
-    <div class="wiz-dots" id="wiz-dots">
-      <div class="wiz-dot" data-dot="1"></div>
-      <div class="wiz-dot" data-dot="2"></div>
-      <div class="wiz-dot" data-dot="3"></div>
+    <div class="wiz-pontos">
+      <div class="wiz-ponto" data-p="1"></div>
+      <div class="wiz-ponto" data-p="2"></div>
+      <div class="wiz-ponto" data-p="3"></div>
     </div>
-    <button class="wiz-btn-icon" id="wiz-close" aria-label="Cancelar">✕</button>
+    <button class="wiz-btn" id="wiz-fechar" type="button" aria-label="Cancelar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
   </div>
 
-  <div class="wiz-track">
-
-    <!-- Step 1: Service type -->
-    <div class="wizard-step" data-step="1">
-      <div class="wiz-content">
+  <div class="wiz-corpo" id="wiz-corpo">
+    <div class="wiz-in">
+      <div class="wiz-passo" data-p="1">
         <p class="wiz-eyebrow">Passo 1 de 3</p>
-        <h2 class="wiz-question">Que serviço<br>foi feito?</h2>
-        <div class="wiz-service-grid" id="wiz-service-grid"></div>
-        <div class="wiz-outro-wrap" id="wiz-outro-wrap">
-          <div class="field">
-            <label class="field-label" for="w-outro">Nome do serviço</label>
-            <input type="text" id="w-outro" class="input" placeholder="Ex: Troca de velas, Ar condicionado..." autocomplete="off">
+        <h2 class="wiz-pergunta">Que serviço foi feito?</h2>
+        <div class="serv-grid" id="serv-grid"></div>
+        <div class="campos" id="outro-wrap" style="display:none; margin-top:var(--sp-5)">
+          <div class="campo">
+            <label class="campo-label" for="w-outro">Nome do serviço</label>
+            <input type="text" id="w-outro" class="input" placeholder="Ex: Higienização do ar" autocomplete="off">
           </div>
-          <button class="btn-primary" id="wiz-outro-next">Próximo</button>
+          <button class="btn btn-primario" id="outro-ok" type="button">Próximo</button>
         </div>
       </div>
-    </div>
 
-    <!-- Step 2: Date + KM -->
-    <div class="wizard-step" data-step="2">
-      <div class="wiz-content">
+      <div class="wiz-passo" data-p="2">
         <p class="wiz-eyebrow">Passo 2 de 3</p>
-        <h2 class="wiz-question">Data e<br>quilometragem</h2>
-        <div class="wiz-fields">
-          <div class="field">
-            <label class="field-label" for="w-date">Data</label>
-            <input type="date" id="w-date" class="input" required aria-describedby="w-date-err">
-            <span class="field-error" id="w-date-err" role="alert">Informe a data.</span>
+        <h2 class="wiz-pergunta">Quando e com quantos km?</h2>
+        <div class="campos">
+          <div class="campo">
+            <label class="campo-label" for="w-data">Data</label>
+            <input type="date" id="w-data" class="input" required>
+            <span class="erro-msg" id="e-data">Informe a data.</span>
           </div>
-          <div class="field">
-            <label class="field-label" for="w-km">Quilometragem</label>
-            <input type="number" id="w-km" class="input" placeholder="Quilometragem atual do carro (ex: 45000)" inputmode="numeric" min="0" required aria-describedby="w-km-err">
-            <span class="field-error" id="w-km-err" role="alert">Informe a quilometragem.</span>
-          </div>
-        </div>
-      </div>
-      <div class="wiz-footer">
-        <button class="btn-primary" id="wiz-next-2">Próximo</button>
-      </div>
-    </div>
-
-    <!-- Step 3: Optional details -->
-    <div class="wizard-step" data-step="3">
-      <div class="wiz-content">
-        <p class="wiz-eyebrow">Passo 3 de 3 · Opcionais</p>
-        <h2 class="wiz-question">Mais<br>detalhes</h2>
-        <div class="wiz-fields">
-          <div class="field">
-            <label class="field-label" for="w-cost">Custo <span class="field-optional">— opcional</span></label>
-            <div class="input-with-prefix">
-              <span class="input-prefix-label" aria-hidden="true">R$</span>
-              <input type="number" id="w-cost" class="input" placeholder="0,00" inputmode="decimal" min="0" step="0.01">
-            </div>
-          </div>
-          <div class="field">
-            <label class="field-label" for="w-location">Local / oficina <span class="field-optional">— opcional</span></label>
-            <input type="text" id="w-location" class="input" placeholder="Ex: Auto Center Silva" autocomplete="off">
-          </div>
-          <div class="field">
-            <label class="field-label" for="w-desc">Observação <span class="field-optional">— opcional</span></label>
-            <input type="text" id="w-desc" class="input" placeholder="Ex: Óleo sintético 5W30" autocomplete="off">
+          <div class="campo">
+            <label class="campo-label" for="w-km">Quilometragem</label>
+            <input type="number" id="w-km" class="input" inputmode="numeric" min="0" placeholder="Ex: 86400" required>
+            <span class="erro-msg" id="e-km">Informe a quilometragem.</span>
           </div>
         </div>
       </div>
-      <div class="wiz-footer">
-        <button class="btn-ghost" id="wiz-skip">Pular</button>
-        <button class="btn-primary" id="wiz-submit">Registrar</button>
+
+      <div class="wiz-passo" data-p="3">
+        <p class="wiz-eyebrow">Passo 3 de 3 · opcional</p>
+        <h2 class="wiz-pergunta">Mais alguma coisa?</h2>
+        <div class="campos">
+          <div class="campo">
+            <label class="campo-label" for="w-custo">Custo <span class="campo-op">— opcional</span></label>
+            <input type="number" id="w-custo" class="input" inputmode="decimal" min="0" step="0.01" placeholder="R$ 0,00">
+          </div>
+          <div class="campo">
+            <label class="campo-label" for="w-local">Oficina <span class="campo-op">— opcional</span></label>
+            <input type="text" id="w-local" class="input" autocomplete="off" placeholder="Ex: Carmax">
+          </div>
+          <div class="campo">
+            <label class="campo-label" for="w-obs">Observação <span class="campo-op">— opcional</span></label>
+            <input type="text" id="w-obs" class="input" autocomplete="off" placeholder="Ex: óleo 10W40 sintético">
+          </div>
+        </div>
       </div>
     </div>
-
   </div>
-</div>
 
-<!-- =====================
-     CONFIRM DIALOG
-     ===================== -->
-<!-- DELETE RECORD CONFIRM -->
-<div class="confirm-overlay" id="delete-confirm-overlay" role="dialog" aria-modal="true" aria-labelledby="delete-confirm-title">
-  <div class="confirm-box">
-    <p class="confirm-title" id="delete-confirm-title">Excluir registro?</p>
-    <p class="confirm-preview" id="delete-confirm-preview"></p>
-    <p class="confirm-text">Você tem alguns segundos para desfazer depois da exclusão.</p>
-    <div class="confirm-actions">
-      <button class="btn-ghost" id="btn-delete-cancel">Cancelar</button>
-      <button class="btn-danger" id="btn-delete-ok">Excluir</button>
+  <div class="wiz-pe" id="wiz-pe">
+    <div class="wiz-pe-in">
+      <button class="btn" id="wiz-pular" type="button" style="display:none">Pular</button>
+      <button class="btn btn-primario" id="wiz-avancar" type="button">Próximo</button>
     </div>
   </div>
 </div>
 
-<!-- =====================
-     TOAST
-     ===================== -->
-<div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+<!-- ============================================================
+     CONFIRMAÇÃO DE EXCLUSÃO
+     ============================================================ -->
+<div class="overlay" id="conf" role="dialog" aria-modal="true" aria-labelledby="conf-t">
+  <div class="dialogo">
+    <p class="dialogo-t" id="conf-t">Excluir este registro?</p>
+    <p class="dialogo-prev" id="conf-prev"></p>
+    <p class="dialogo-p">Você tem alguns segundos para desfazer.</p>
+    <div class="dialogo-acoes">
+      <button class="btn" id="conf-nao" type="button">Cancelar</button>
+      <button class="btn btn-perigo" id="conf-sim" type="button">Excluir</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
-  // ============================================================
-  // CONSTANTS
-  // ============================================================
+/* ============================================================
+   PLANO DE MANUTENÇÃO
 
-  const STORE_CAR     = 'prevcar-car-v1';
-  const STORE_RECORDS = 'prevcar-records-v1';
+   Fontes:
+    - Yamaha Fluo 125 ABS 2023 — manual do proprietário BJF-F8199-W0,
+      capítulo 8, tabelas de manutenção periódica. Fonte oficial.
+    - Renault Kwid 2021 — o manual NU 1219-9 (ed. 05/2021) NÃO traz os
+      intervalos; ele remete ao livreto "Garantia e Manutenção", que não
+      temos. Os números vêm do plano da rede Renault e da Revista O
+      Mecânico, marcados com fonte 'rede'.
 
-  const SERVICE_LABELS = {
-    'troca-oleo':    'Troca de óleo',
-    'rodizio-pneus': 'Rodízio de pneus',
-    'pastilha-freio':'Pastilhas de freio',
-    'alinhamento':   'Alinhamento / Balanceamento',
-    'revisao-geral': 'Revisão geral',
-    'filtros':       'Troca de filtros',
-    'correia':       'Correia dentada',
-    'bateria':       'Bateria',
-    'suspensao':     'Suspensão',
-    'outro':         'Outro serviço',
-  };
+   Para mudar um prazo, altere o número aqui. Nada mais precisa mudar.
+   ============================================================ */
 
-  // Per-service colors — automotive instrument-panel palette
-  const SERVICE_COLORS = {
-    'troca-oleo':    'oklch(75% 0.16 68)',    // amber — motor oil
-    'rodizio-pneus': 'oklch(64% 0.13 235)',   // steel blue — tyre rubber
-    'pastilha-freio':'oklch(65% 0.19 22)',    // red — brake/stop
-    'alinhamento':   'oklch(72% 0.15 198)',   // cyan — precision crosshair
-    'revisao-geral': 'oklch(74% 0.270 142)',  // brand green — "all ok"
-    'filtros':       'oklch(67% 0.14 302)',   // violet — filtration/clean
-    'correia':       'oklch(70% 0.17 52)',    // burnt orange — belt/chain
-    'bateria':       'oklch(79% 0.18 100)',   // electric yellow — charge
-    'suspensao':     'oklch(69% 0.13 186)',   // teal — oscillation
-    'outro':         'oklch(56% 0.008 65)',   // neutral
-  };
+const STORE_VEICULO = 'prevcar-veiculo-v3';
+const STORE_CACHE   = 'prevcar-cache-v3';
 
-  // Feather-style inline SVG paths (24×24 viewBox, stroke-based)
-  const SERVICE_ICONS = {
-    'troca-oleo':    '<path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>',
-    'rodizio-pneus': '<polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>',
-    'pastilha-freio':'<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/>',
-    'alinhamento':   '<circle cx="12" cy="12" r="10"/><line x1="22" y1="12" x2="18" y2="12"/><line x1="6" y1="12" x2="2" y2="12"/><line x1="12" y1="6" x2="12" y2="2"/><line x1="12" y1="22" x2="12" y2="18"/><circle cx="12" cy="12" r="1" fill="currentColor"/>',
-    'revisao-geral': '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
-    'filtros':       '<polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>',
-    'correia':       '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
-    'bateria':       '<rect x="2" y="7" width="16" height="10" rx="2" ry="2"/><line x1="22" y1="11" x2="22" y2="13"/><line x1="7" y1="12" x2="10" y2="12"/><line x1="8.5" y1="10" x2="8.5" y2="14"/>',
-    'suspensao':     '<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>',
-    'outro':         '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>',
-  };
+const SERVICOS = {
+  'revisao-geral':      { label: 'Revisão geral',            cor: '#22A757', icone: 'wrench' },
+  'troca-oleo':         { label: 'Óleo + filtro',            cor: '#E9962A', icone: 'oil' },
+  'nivel-oleo':         { label: 'Conferir nível de óleo',   cor: '#EFC020', icone: 'gauge' },
+  'filtro-oleo':        { label: 'Filtro de óleo (tela)',    cor: '#D98A2B', icone: 'filter' },
+  'filtros':            { label: 'Filtros ar + combustível', cor: '#8E63C4', icone: 'filter' },
+  'filtro-ar':          { label: 'Filtro de ar',             cor: '#8E63C4', icone: 'filter' },
+  'filtro-cabine':      { label: 'Filtro da cabine',         cor: '#A264B8', icone: 'wind' },
+  'filtro-cvt':         { label: 'Filtro de ar da CVT',      cor: '#7B68C9', icone: 'wind' },
+  'filtro-combustivel': { label: 'Filtro de combustível',    cor: '#C4622F', icone: 'fuel' },
+  'velas':              { label: 'Velas de ignição',         cor: '#EFC020', icone: 'spark' },
+  'vela':               { label: 'Vela de ignição',          cor: '#EFC020', icone: 'spark' },
+  'valvulas':           { label: 'Folga das válvulas',       cor: '#D2762E', icone: 'valve' },
+  'correia-cvt':        { label: 'Correia em V (CVT)',       cor: '#C97A33', icone: 'belt' },
+  'oleo-transmissao':   { label: 'Óleo da transmissão',      cor: '#D9A038', icone: 'oil' },
+  'lubrificacao':       { label: 'Lubrificação da polia',    cor: '#C9A13C', icone: 'drop' },
+  'fluido-freio':       { label: 'Fluido de freio',          cor: '#DB4C40', icone: 'brakefluid' },
+  'mangueira-freio':    { label: 'Mangueiras de freio',      cor: '#C0453C', icone: 'hose' },
+  'pastilha-freio':     { label: 'Pastilhas de freio',       cor: '#DB4C40', icone: 'brake' },
+  'arrefecimento':      { label: 'Líquido de arrefecimento', cor: '#3D8FD0', icone: 'coolant' },
+  'rodizio-pneus':      { label: 'Rodízio de pneus',         cor: '#5B8BBE', icone: 'rotate' },
+  'alinhamento':        { label: 'Alinhamento e balanc.',    cor: '#3FA8B8', icone: 'crosshair' },
+  'pneus':              { label: 'Pneus',                    cor: '#5B7FBE', icone: 'tyre' },
+  'suspensao':          { label: 'Suspensão',                cor: '#3FA898', icone: 'suspension' },
+  'bateria':            { label: 'Bateria',                  cor: '#EFC020', icone: 'battery' },
+  'outro':              { label: 'Outro serviço',            cor: '#8C877B', icone: 'plus' },
+};
 
-  // ============================================================
-  // GEMINI API
-  // ============================================================
+const VEICULOS = {
+  kwid: {
+    id: 'kwid',
+    nome: 'Renault Kwid',
+    detalhe: '2021 · 1.0 12V Flex',
+    img: 'assets/kwid.png',
+    ficha: [
+      ['Motor',        'B4D · 999 cm³'],
+      ['Potência',     '66 / 70 cv'],
+      ['Óleo',         '10W40 RN0700'],
+      ['Arrefecimento','Glaceol RX D'],
+      ['Sincronismo',  'Corrente'],
+      ['Combustível',  'Flex'],
+    ],
+    plano: {
+      'revisao-geral':  { km: 10000, dias: 365,  fonte: 'rede',   nota: 'Revisão programada Renault: 10.000 km ou 12 meses.' },
+      'troca-oleo':     { km: 10000, dias: 365,  fonte: 'rede',   nota: 'Óleo e filtro juntos. Especificação RN0700 / ACEA A3-B4.' },
+      'nivel-oleo':     { km: null,  dias: 30,   fonte: 'manual', nota: 'O manual admite consumo de até 0,5 L a cada 1.000 km como normal. A corrente de comando depende deste óleo.' },
+      'filtros':        { km: 20000, dias: null, fonte: 'rede',   nota: 'Filtro de ar e filtro de combustível.' },
+      'filtro-cabine':  { km: 15000, dias: 365,  fonte: 'rede',   nota: 'Filtro do ar-condicionado.' },
+      'velas':          { km: 40000, dias: 1460, fonte: 'rede',   nota: 'Use apenas as velas da etiqueta do compartimento do motor.' },
+      'fluido-freio':   { km: 80000, dias: 1460, fonte: 'rede',   nota: 'Renault: 80.000 km ou 4 anos.' },
+      'arrefecimento':  { km: 80000, dias: 1460, fonte: 'rede',   nota: 'Glaceol RX tipo D — 30% aditivo, 70% água desmineralizada.' },
+      'pastilha-freio': { km: 25000, dias: null, fonte: 'rede',   nota: 'Estimativa de uso. Limite mínimo da massa de atrito: 2 mm.' },
+      'rodizio-pneus':  { km: 10000, dias: null, fonte: 'rede',   nota: 'Junto com a revisão, para desgaste uniforme.' },
+      'alinhamento':    { km: 10000, dias: null, fonte: 'rede',   nota: 'Ou sempre que sentir vibração ou o carro puxando.' },
+      'suspensao':      { km: 40000, dias: null, fonte: 'rede',   nota: 'Ruído ao passar em irregularidade é queixa comum no modelo.' },
+      'bateria':        { km: null,  dias: 1460, fonte: 'rede',   nota: 'Não requer manutenção. Trajetos curtos reduzem a carga.' },
+      'outro':          { km: null,  dias: null, fonte: null,     nota: null },
+    },
+    cronicos: [
+      {
+        titulo: 'Consumo de óleo acima do normal',
+        icone: 'oil',
+        texto: 'O próprio manual admite consumo de até 0,5 L a cada 1.000 km como normal, e há donos relatando bem mais que isso, com casos de motor danificado em baixa quilometragem. O agravante é que a corrente de comando é lubrificada por esse mesmo óleo.',
+        rec: 'Conferir o nível todo mês, com o motor frio e o carro no plano. Passando de 0,5 L por 1.000 km, procurar a oficina antes que vire problema de motor.',
+      },
+      {
+        titulo: 'Freios com resposta fraca',
+        icone: 'brake',
+        texto: 'Queixa recorrente entre os donos, mesmo com o sistema em ordem e depois de muitos quilômetros rodados.',
+        rec: 'Não é defeito do seu carro: o dimensionamento é justo mesmo. Manter pastilha e fluido em dia e aumentar a distância de seguimento.',
+      },
+      {
+        titulo: 'Ruído e vazamento no câmbio',
+        icone: 'wrench',
+        texto: 'Relatos de barulho, vazamento e, em alguns casos, quebra da transmissão manual de 5 marchas.',
+        rec: 'Ao ouvir ruído novo ao engatar, registrar aqui com a data e levar cedo — a diferença entre um reparo e uma troca de câmbio.',
+      },
+      {
+        titulo: 'Vazamento no ar-condicionado',
+        icone: 'wind',
+        texto: 'Uma das mangueiras passa baixa, perto do motor, e pode dobrar e desenvolver um microfuro por onde o gás escapa aos poucos.',
+        rec: 'Se o ar gelar menos a cada ano, suspeitar da mangueira antes de simplesmente recarregar o gás.',
+      },
+    ],
+  },
 
-  const GROQ_KEY = 'gsk_yfI244KeAhiTU06i' + 'K9lXWGdyb3FY2hWIC12f1q6JP3yYtJu0CpK1';
+  fluo: {
+    id: 'fluo',
+    nome: 'Yamaha Fluo 125',
+    detalhe: '2023 · ABS Hybrid',
+    img: 'assets/fluo.png',
+    ficha: [
+      ['Cilindrada',   '124,9 cm³'],
+      ['Óleo motor',   '0,80 L · 10W-40'],
+      ['Transmissão',  '0,10 L · 10W-40'],
+      ['Vela',         'NGK CR6HSA'],
+      ['Pneu diant.',  '100/90-12'],
+      ['Pneu tras.',   '110/90-12'],
+      ['Bateria',      'YTZ6V · 12 V'],
+      ['Tanque',       '4,2 L'],
+    ],
+    plano: {
+      'revisao-geral':      { km: 3000,  dias: 180,  fonte: 'manual', nota: 'Verificações a cada 3.000 km ou 6 meses. A partir dos 6.000 km o ciclo se repete a cada 3.000 km.' },
+      'troca-oleo':         { km: 3000,  dias: 180,  fonte: 'manual', nota: 'Yamalube 10W-40, API SL+, JASO MA/MB. 0,80 L na troca.' },
+      'filtro-oleo':        { km: 6000,  dias: null, fonte: 'manual', nota: 'É uma tela — limpar, não substituir.' },
+      'vela':               { km: 6000,  dias: null, fonte: 'manual', nota: 'Substituir a cada 6.000 km. NGK CR6HSA.' },
+      'valvulas':           { km: 6000,  dias: null, fonte: 'manual', nota: 'Serviço de concessionária — exige ferramenta especial.' },
+      'filtro-cvt':         { km: 3000,  dias: null, fonte: 'manual', nota: 'Limpar a cada revisão. Mais frequente em área úmida ou empoeirada.' },
+      'correia-cvt':        { km: 24000, dias: null, fonte: 'manual', nota: 'Trocar aos 24.000 km mesmo sem desgaste aparente. Inspecionar já aos 6.000 e a cada 3.000 km depois.' },
+      'oleo-transmissao':   { km: 12000, dias: null, fonte: 'manual', nota: 'SAE 10W-40 SG+. Apenas 0,10 L.' },
+      'filtro-ar':          { km: 15000, dias: null, fonte: 'manual', nota: 'Papel embebido em óleo: NÃO limpar com ar comprimido, só substituir.' },
+      'filtro-combustivel': { km: 12000, dias: null, fonte: 'manual', nota: 'Verificar obstrução ou dano a cada 12.000 km.' },
+      'lubrificacao':       { km: 12000, dias: null, fonte: 'manual', nota: 'Polia secundária da correia em V e rolamentos da direção.' },
+      'fluido-freio':       { km: null,  dias: 730,  fonte: 'manual', nota: 'A cada 2 anos, junto com os componentes internos de cilindros e pinças.' },
+      'mangueira-freio':    { km: null,  dias: 1460, fonte: 'manual', nota: 'A cada 4 anos, ou antes se rachadas.' },
+      'bateria':            { km: null,  dias: 90,   fonte: 'manual', nota: 'Verificar a cada 3 meses. É a queixa nº 1 do modelo.' },
+      'pneus':              { km: 18000, dias: null, fonte: 'rede',   nota: 'Estimativa de uso. Pirelli Diablo Scooter.' },
+      'pastilha-freio':     { km: null,  dias: null, fonte: 'manual', nota: 'Trocar sempre que atingirem o limite de desgaste — sem intervalo fixo.' },
+      'outro':              { km: null,  dias: null, fonte: null,     nota: null },
+    },
+    cronicos: [
+      {
+        titulo: 'Bateria descarrega com a moto parada',
+        icone: 'battery',
+        texto: 'É a queixa nº 1 do modelo, inclusive em motos com poucas centenas de quilômetros. Com o Stop&Start e a chave fora da posição correta, o sistema elétrico segue consumindo. A Yamaha responde que não encontra defeito na bateria nem no sistema de carga — e que moto parada não repõe o que a partida gasta.',
+        rec: 'Desligar a chave por completo ao estacionar e rodar ao menos uma vez por semana. Parada por mais tempo, tirar a bateria ou usar carregador de manutenção.',
+      },
+      {
+        titulo: 'Ruído na suspensão dianteira',
+        icone: 'suspension',
+        texto: 'Relatado por donos já nos primeiros meses de uso, às vezes persistindo depois da troca.',
+        rec: 'Pedir a verificação na revisão dos 6.000 km e registrar aqui, com data, para sustentar a garantia.',
+      },
+      {
+        titulo: 'Manchas no painel',
+        icone: 'panel',
+        texto: 'Aparecem manchas no painel e as concessionárias costumam substituir apenas o protetor, sem resolver a causa.',
+        rec: 'Fotografar assim que aparecer e registrar enquanto estiver na garantia.',
+      },
+    ],
+  },
+};
 
-  // ============================================================
-  // SUPABASE
-  // ============================================================
-  const db = window.supabase?.createClient(
-    'https://azgddwmpkndpwrojqypq.supabase.co',
-    'sb_publishable_DqoJGQpaZhOyUJidsZ0h-Q_zdNYLyT_'
-  ) ?? null;
+/* ============================================================
+   ÍCONES
+   ============================================================ */
+const ICONES = {
+  wrench:     '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
+  oil:        '<path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>',
+  gauge:      '<path d="M12 14l4-4"/><circle cx="12" cy="14" r="1.4" fill="currentColor"/><path d="M3.5 18a9 9 0 1 1 17 0"/>',
+  filter:     '<polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>',
+  wind:       '<path d="M9.59 4.59A2 2 0 1 1 11 8H2"/><path d="M12.59 19.41A2 2 0 1 0 14 16H2"/><path d="M17.73 7.73A2.5 2.5 0 1 1 19.5 12H2"/>',
+  fuel:       '<line x1="3" y1="22" x2="15" y2="22"/><line x1="4" y1="9" x2="14" y2="9"/><path d="M14 22V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v18"/><path d="M14 13h2a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2a2 2 0 0 0 2-2V9.83a2 2 0 0 0-.59-1.42L18 5"/>',
+  spark:      '<path d="M13 2L4.09 12.97a1 1 0 0 0 .78 1.63H11l-1 7.4 8.91-10.97a1 1 0 0 0-.78-1.63H12l1-7.4z"/>',
+  valve:      '<circle cx="12" cy="6" r="3"/><line x1="12" y1="9" x2="12" y2="21"/><line x1="9" y1="21" x2="15" y2="21"/>',
+  belt:       '<ellipse cx="7" cy="12" rx="4" ry="6"/><ellipse cx="17" cy="12" rx="3" ry="4.5"/><line x1="7" y1="6" x2="17" y2="7.5"/><line x1="7" y1="18" x2="17" y2="16.5"/>',
+  drop:       '<path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/><circle cx="12" cy="14" r="2" fill="currentColor"/>',
+  brakefluid: '<path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/><line x1="9" y1="13" x2="15" y2="13"/>',
+  hose:       '<path d="M4 6h6a4 4 0 0 1 4 4v4a4 4 0 0 0 4 4h2"/><rect x="2" y="4" width="3" height="4" rx="1"/><rect x="19" y="16" width="3" height="4" rx="1"/>',
+  brake:      '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/>',
+  coolant:    '<path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4 4 0 1 0 5 0z"/>',
+  rotate:     '<polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>',
+  crosshair:  '<circle cx="12" cy="12" r="10"/><line x1="22" y1="12" x2="18" y2="12"/><line x1="6" y1="12" x2="2" y2="12"/><line x1="12" y1="6" x2="12" y2="2"/><line x1="12" y1="22" x2="12" y2="18"/><circle cx="12" cy="12" r="1" fill="currentColor"/>',
+  tyre:       '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="8"/><line x1="12" y1="16" x2="12" y2="22"/><line x1="2" y1="12" x2="8" y2="12"/><line x1="16" y1="12" x2="22" y2="12"/>',
+  suspension: '<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>',
+  battery:    '<rect x="2" y="7" width="16" height="10" rx="2"/><line x1="22" y1="11" x2="22" y2="13"/><line x1="7" y1="12" x2="10" y2="12"/><line x1="8.5" y1="10" x2="8.5" y2="14"/>',
+  panel:      '<rect x="3" y="4" width="18" height="14" rx="2"/><path d="M7 20h10"/>',
+  plus:       '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>',
+};
 
-  async function fetchCarFromSupabase(placa) {
-    if (!db) return null;
-    const { data, error } = await db.from('vehicles').select('*').eq('placa', placa).maybeSingle();
-    if (error || !data) return null;
-    return data;
-  }
+function svgIco(nome) {
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" ' +
+         'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+         (ICONES[nome] || ICONES.plus) + '</svg>';
+}
 
-  async function fetchRecordsFromSupabase(placa) {
-    if (!db) return [];
-    const { data, error } = await db.from('manutencoes').select('*').eq('placa', placa).order('data', { ascending: false });
-    if (error || !data) return [];
-    return data.map(r => ({
-      id:          r.id,
-      type:        r.tipo,
-      description: r.descricao || '',
-      date:        r.data,
-      mileage:     r.quilometragem,
-      cost:        r.custo,
-      location:    r.local || '',
-      addedAt:     r.criado_em,
-    }));
-  }
+/* ============================================================
+   ESTADO
+   ============================================================ */
+let veiculoAtual = null;
+let estado = { kmAtual: null, registros: [] };
 
-  async function saveCarToSupabase(car) {
-    if (!db) return;
-    const { error } = await db.from('vehicles').insert([{
-      placa:   car.placa,
-      marca:   car.marca,
-      modelo:  car.modelo,
-      ano:     car.ano,
-    }]);
-    if (error) console.error('[PrevCar] Supabase vehicles error:', error);
-  }
+const $ = id => document.getElementById(id);
 
-  function getPlaca() {
-    return getCar()?.placa ?? null;
-  }
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
 
-  async function insertMaintenanceToSupabase(record) {
-    if (!db) return;
-    const placa = getPlaca();
-    if (!placa) return;
-    const { error } = await db.from('manutencoes').insert([{
-      id:          record.id,
-      placa,
-      tipo:        record.type,
-      descricao:   record.description || null,
-      data:        record.date,
-      quilometragem: record.mileage,
-      custo:       record.cost ?? null,
-      local:       record.location || null,
-      criado_em:   record.addedAt,
-    }]);
-    if (error) console.error('[PrevCar] Supabase manutencoes insert error:', error);
-  }
+function planoDo(v)   { return VEICULOS[v]?.plano ?? {}; }
+function labelServ(t, outro) { return (t === 'outro' && outro) ? outro : (SERVICOS[t]?.label ?? t); }
+function corServ(t)   { return SERVICOS[t]?.cor ?? SERVICOS.outro.cor; }
+function icoServ(t)   { return SERVICOS[t]?.icone ?? 'plus'; }
 
-  async function updateMaintenanceInSupabase(id, changes) {
-    if (!db) return;
-    const { error } = await db.from('manutencoes').update({
-      tipo:          changes.type,
-      descricao:     changes.description || null,
-      data:          changes.date,
-      quilometragem: changes.mileage,
-      custo:         changes.cost ?? null,
-      local:         changes.location || null,
-    }).eq('id', id);
-    if (error) console.error('[PrevCar] Supabase manutencoes update error:', error);
-  }
+/* ---------- Cache local ---------- */
+function lerCache() { try { return JSON.parse(localStorage.getItem(STORE_CACHE)) || {}; } catch { return {}; } }
+function salvarCache(v, d) {
+  const c = lerCache(); c[v] = d;
+  try { localStorage.setItem(STORE_CACHE, JSON.stringify(c)); } catch {}
+}
+function cacheDo(v) { return lerCache()[v] || { kmAtual: null, registros: [] }; }
 
-  async function deleteMaintenanceFromSupabase(id) {
-    if (!db) return;
-    const { error } = await db.from('manutencoes').delete().eq('id', id);
-    if (error) console.error('[PrevCar] Supabase manutencoes delete error:', error);
-  }
+/* ============================================================
+   API
+   ============================================================ */
+async function api(rota, op) {
+  const r = await fetch('/api' + rota, { headers: { 'Content-Type': 'application/json' }, ...op });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  return r.status === 204 ? null : r.json();
+}
 
-  async function fetchCarData(marca, modelo, ano) {
-    const prompt = `Retorne um objeto JSON com os intervalos de manutenção recomendados para um ${marca} ${modelo} ${ano} no mercado brasileiro. Use esta estrutura exata (valores inteiros em km ou dias, null se não aplicável):
-{
-  "intervals": {
-    "troca-oleo":     { "km": NUMBER_OR_NULL, "days": NUMBER_OR_NULL },
-    "rodizio-pneus":  { "km": NUMBER_OR_NULL, "days": null },
-    "pastilha-freio": { "km": NUMBER_OR_NULL, "days": null },
-    "alinhamento":    { "km": NUMBER_OR_NULL, "days": null },
-    "revisao-geral":  { "km": NUMBER_OR_NULL, "days": NUMBER_OR_NULL },
-    "filtros":        { "km": NUMBER_OR_NULL, "days": null },
-    "correia":        { "km": NUMBER_OR_NULL, "days": null },
-    "bateria":        { "km": null,           "days": NUMBER_OR_NULL },
-    "suspensao":      { "km": NUMBER_OR_NULL, "days": null }
+function marcarOffline(off) { $('offline').classList.toggle('on', off); }
+
+async function carregar(v) {
+  try {
+    const d = await api('/dados?veiculo=' + encodeURIComponent(v));
+    estado = { kmAtual: d.kmAtual ?? null, registros: d.registros ?? [] };
+    salvarCache(v, estado);
+    marcarOffline(false);
+  } catch (e) {
+    console.warn('[PrevCar] sem conexão, usando cache:', e.message);
+    estado = cacheDo(v);
+    marcarOffline(true);
   }
 }
-Importante: "days" representa DIAS (ex: troca de óleo a cada 365 dias = 1 ano). Valores mínimos esperados: troca-oleo km≥5000 days≥180, bateria days≥365.`;
 
-    const controller = new AbortController();
-    const _fetchTimeout = setTimeout(() => controller.abort(), 8000);
-    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      signal: controller.signal,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${GROQ_KEY}`
-      },
-      body: JSON.stringify({
-        model: 'llama-3.1-8b-instant',
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0.1,
-        response_format: { type: 'json_object' }
-      })
-    });
-    clearTimeout(_fetchTimeout);
-    if (!res.ok) throw new Error(`Groq ${res.status}`);
-    const data = await res.json();
-    const parsed = JSON.parse(data.choices[0].message.content);
-    return { intervals: sanitizeIntervals(parsed.intervals ?? parsed) };
+async function sincronizar(fn) {
+  salvarCache(veiculoAtual, estado);
+  try { await fn(); marcarOffline(false); }
+  catch (e) { console.warn('[PrevCar] falha ao sincronizar:', e.message); marcarOffline(true); }
+}
+
+/* ============================================================
+   FORMATAÇÃO
+   ============================================================ */
+const MESES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+
+function fmtKm(n)    { return Number(n).toLocaleString('pt-BR') + ' km'; }
+function fmtKmSec(n) { return Number(n).toLocaleString('pt-BR'); }
+function fmtR$(v)    { return 'R$ ' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function fmtData(s)  { const [a,m,d] = s.split('-'); return `${d}/${m}/${a}`; }
+function fmtMesAno(d){ return MESES[d.getMonth()].toUpperCase() + '/' + String(d.getFullYear()).slice(2); }
+
+function fmtIntervalo(i) {
+  const p = [];
+  if (i.km) p.push(fmtKm(i.km));
+  if (i.dias) {
+    if (i.dias === 30) p.push('mês');
+    else if (i.dias >= 730 && i.dias % 365 === 0) p.push((i.dias / 365) + ' anos');
+    else if (i.dias % 30 === 0) p.push((i.dias / 30) + ' meses');
+    else if (i.dias === 365) p.push('12 meses');
+    else p.push(i.dias + ' dias');
   }
+  return p.join(' ou ');
+}
 
-  const INTERVAL_MINS = {
-    'troca-oleo':     { km: 5000,  days: 180 },
-    'rodizio-pneus':  { km: 5000,  days: null },
-    'pastilha-freio': { km: 10000, days: null },
-    'alinhamento':    { km: 5000,  days: null },
-    'revisao-geral':  { km: 5000,  days: 180 },
-    'filtros':        { km: 5000,  days: null },
-    'correia':        { km: 20000, days: null },
-    'bateria':        { km: null,  days: 365  },
-    'suspensao':      { km: 10000, days: null },
-  };
+function fmtDuracao(dias) {
+  if (dias < 1) return 'menos de um dia';
+  if (dias === 1) return '1 dia';
+  if (dias < 45) return dias + ' dias';
+  const m = Math.round(dias / 30);
+  if (m < 24) return m + ' meses';
+  return (Math.round(dias / 365 * 10) / 10).toString().replace('.', ',') + ' anos';
+}
 
-  function sanitizeIntervals(raw) {
-    if (!raw || typeof raw !== 'object') return INTERVALS;
-    const result = {};
-    for (const [key, val] of Object.entries(raw)) {
-      const min = INTERVAL_MINS[key] || {};
-      result[key] = {
-        km:   val.km   != null ? Math.max(val.km,   min.km   || 0) : null,
-        days: val.days != null ? Math.max(val.days, min.days || 0) : null,
-      };
-    }
-    return result;
+function mostrarTela(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  $(id).classList.add('active');
+  $('fab').classList.toggle('on', id === 'screen-app');
+}
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+let _t = null;
+function toast(msg, ms = 2600, undo = null) {
+  const el = $('toast');
+  clearTimeout(_t);
+  el.innerHTML = '';
+  const s = document.createElement('span');
+  s.textContent = msg;
+  el.appendChild(s);
+  if (undo) {
+    const b = document.createElement('button');
+    b.className = 'toast-undo'; b.type = 'button'; b.textContent = 'Desfazer';
+    b.addEventListener('click', () => { undo(); el.classList.remove('on'); clearTimeout(_t); });
+    el.appendChild(b);
   }
+  el.classList.add('on');
+  _t = setTimeout(() => el.classList.remove('on'), ms);
+}
 
-  function getIntervals() {
-    try {
-      const car = getCar();
-      if (car?.intervals) return car.intervals;
-    } catch { /* fall through */ }
-    return INTERVALS;
-  }
+/* ============================================================
+   PREVISÕES
+   ============================================================ */
+function kmRef() {
+  const doHist = estado.registros.length ? Math.max(...estado.registros.map(r => r.mileage)) : 0;
+  return Math.max(estado.kmAtual ?? 0, doHist);
+}
 
-  // ============================================================
-  // Maintenance intervals: km and/or days (generic fallback)
-  // ============================================================
-  const INTERVALS = {
-    'troca-oleo':    { km: 7500,  days: 365  },
-    'rodizio-pneus': { km: 10000, days: null },
-    'pastilha-freio':{ km: 35000, days: null },
-    'alinhamento':   { km: 10000, days: null },
-    'revisao-geral': { km: 10000, days: 365  },
-    'filtros':       { km: 15000, days: null },
-    'correia':       { km: 60000, days: null },
-    'bateria':       { km: null,  days: 1460 },
-    'suspensao':     { km: 40000, days: null },
-  };
+function calcularPrevisoes() {
+  const plano = planoDo(veiculoAtual);
+  const km = kmRef();
+  const agora = new Date();
+  const temKm = km > 0;
 
-  // ============================================================
-  // STORAGE
-  // ============================================================
+  const ultimo = {};
+  for (const r of estado.registros) if (!ultimo[r.type]) ultimo[r.type] = r;
 
-  function getCar()         { try { return JSON.parse(localStorage.getItem(STORE_CAR)); }     catch { return null; } }
-  function getRecords()     { try { return JSON.parse(localStorage.getItem(STORE_RECORDS)) || []; } catch { return []; } }
-  function saveCar(car)     { localStorage.setItem(STORE_CAR, JSON.stringify(car)); }
-  function saveRecords(recs){ localStorage.setItem(STORE_RECORDS, JSON.stringify(recs)); }
+  const feitos = [];
+  const novos = [];
 
-  function pushRecord(rec) {
-    const recs = getRecords();
-    recs.unshift(rec);
-    saveRecords(recs);
-  }
+  for (const [tipo, iv] of Object.entries(plano)) {
+    if (tipo === 'outro') continue;
+    const temIv = iv.km != null || iv.dias != null;
+    const u = ultimo[tipo];
 
-  // ============================================================
-  // FORMATTERS
-  // ============================================================
-
-  function fmtKm(n) {
-    return n.toLocaleString('pt-BR') + ' km';
-  }
-
-  function fmtCost(v) {
-    return 'R$\u00a0' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-  }
-
-  function fmtDate(s) {
-    const [y, m, d] = s.split('-');
-    return `${d}/${m}/${y}`;
-  }
-
-  function validatePlate(s) {
-    return /^[A-Z]{3}[0-9][A-Z][0-9]{2}$/.test(s.toUpperCase());
-  }
-
-  // ============================================================
-  // TOAST
-  // ============================================================
-
-  let _toastTimer;
-  function toast(msg, ms = 2600, undoFn = null) {
-    const el = document.getElementById('toast');
-    if (undoFn) {
-      el.innerHTML = `<span>${msg}</span><button class="toast-undo">Desfazer</button>`;
-      el.querySelector('.toast-undo').addEventListener('click', () => {
-        clearTimeout(_toastTimer);
-        el.classList.remove('visible');
-        undoFn();
+    if (!u) {
+      novos.push({
+        tipo, label: labelServ(tipo), status: 'none',
+        valor: temIv ? 'a cada ' + fmtIntervalo(iv) : 'por desgaste',
+        sub: 'nunca registrado', pct: 0, pe: 'sem base de cálculo', nota: iv.nota,
       });
+      continue;
+    }
+    if (!temIv) {
+      feitos.push({
+        tipo, label: labelServ(tipo), status: 'ok',
+        valor: 'por desgaste', sub: 'último em ' + fmtKm(u.mileage),
+        pct: 0, pe: 'sem prazo fixo', nota: iv.nota,
+      });
+      continue;
+    }
+
+    const uKm = u.mileage;
+    const uData = new Date(u.date + 'T00:00:00');
+    const kmVence   = iv.km   != null ? uKm + iv.km : null;
+    const dataVence = iv.dias != null ? new Date(uData.getTime() + iv.dias * 86400000) : null;
+
+    const kmFalta   = (kmVence != null && temKm) ? kmVence - km : null;
+    const diasFalta = dataVence != null ? Math.round((dataVence - agora) / 86400000) : null;
+
+    let status = 'ok';
+    if ((kmFalta != null && kmFalta <= 0) || (diasFalta != null && diasFalta <= 0)) status = 'late';
+    else if ((kmFalta != null && kmFalta <= 1000) || (diasFalta != null && diasFalta <= 30)) status = 'soon';
+
+    // Percentual consumido: o eixo que estiver mais adiantado manda.
+    let pct = 0;
+    if (iv.km && temKm)  pct = Math.max(pct, (km - uKm) / iv.km);
+    if (iv.dias)         pct = Math.max(pct, (agora - uData) / (iv.dias * 86400000));
+    pct = Math.max(0, pct);
+
+    let pe;
+    if (status === 'late') {
+      pe = kmFalta != null && kmFalta <= 0 ? 'passou ' + fmtKm(-kmFalta)
+         : 'venceu há ' + fmtDuracao(-diasFalta);
+    } else if (kmFalta != null) {
+      pe = 'faltam ' + fmtKm(kmFalta);
     } else {
-      el.textContent = msg;
-    }
-    el.classList.add('visible');
-    clearTimeout(_toastTimer);
-    _toastTimer = setTimeout(() => el.classList.remove('visible'), ms);
-  }
-
-  // ============================================================
-  // SCREEN
-  // ============================================================
-
-  function showScreen(id) {
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
-    document.getElementById('fab').classList.toggle('app-visible', id === 'screen-app');
-  }
-
-  // ============================================================
-  // PREDICTIONS ENGINE
-  // ============================================================
-
-  const MONTHS_PT = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
-
-  function fmtMonthYear(date) {
-    return MONTHS_PT[date.getMonth()].toUpperCase() + '/' + String(date.getFullYear()).slice(2);
-  }
-
-  function computePredictions(records) {
-    if (!records.length) return [];
-
-    const currentKm = Math.max(...records.map(r => r.mileage));
-    const now = new Date();
-
-    const lastByType = {};
-    for (const r of records) {
-      if (!lastByType[r.type]) lastByType[r.type] = r;
+      pe = 'faltam ' + fmtDuracao(diasFalta);
     }
 
-    const out = [];
-
-    const activeIntervals = getIntervals();
-    for (const [type, rec] of Object.entries(lastByType)) {
-      const interval = activeIntervals[type];
-      if (!interval) continue;
-
-      const lastKm   = rec.mileage;
-      const lastDate = new Date(rec.date + 'T00:00:00');
-
-      const kmDue    = interval.km   ? lastKm + interval.km : null;
-      const dateDue  = interval.days ? (() => { const d = new Date(lastDate); d.setDate(d.getDate() + interval.days); return d; })() : null;
-
-      const kmLeft   = kmDue   != null ? kmDue   - currentKm                    : null;
-      const daysLeft = dateDue != null ? Math.round((dateDue - now) / 86400000) : null;
-
-      // Determine status from whichever threshold fires first
-      let status = 'ok';
-      if ((kmLeft != null && kmLeft <= 0) || (daysLeft != null && daysLeft <= 0)) {
-        status = 'overdue';
-      } else if ((kmLeft != null && kmLeft <= 1500) || (daysLeft != null && daysLeft <= 30)) {
-        status = 'soon';
-      }
-
-      const kmValue   = kmDue   != null ? fmtKm(kmDue)         : null;
-      const dateValue = dateDue != null ? fmtMonthYear(dateDue) : null;
-      const overdue   = status === 'overdue';
-
-      out.push({ type, label: SERVICE_LABELS[type] || type, status, kmValue, dateValue, overdue });
-    }
-
-    const priority = { overdue: 0, soon: 1, ok: 2 };
-    out.sort((a, b) => (priority[a.status] ?? 3) - (priority[b.status] ?? 3));
-
-    return out;
-  }
-
-  // ============================================================
-  // RENDER
-  // ============================================================
-
-  function renderPredictions(records) {
-    const scroll  = document.getElementById('predictions-scroll');
-    const empty   = document.getElementById('predictions-empty');
-
-    if (!records.length) {
-      scroll.style.display = 'none';
-      empty.style.display  = '';
-      return;
-    }
-
-    const preds = computePredictions(records);
-
-    if (!preds.length) {
-      scroll.style.display = 'none';
-      empty.style.display  = '';
-      empty.textContent    = 'Tudo em dia! Continue registrando para manter as previsões atualizadas.';
-      return;
-    }
-
-    empty.style.display  = 'none';
-    scroll.style.display = 'flex';
-    scroll.innerHTML     = '';
-
-    preds.forEach(p => {
-      const card = document.createElement('div');
-      card.className = 'prediction-card';
-      card.setAttribute('data-status', p.status);
-      card.setAttribute('role', 'listitem');
-      card.innerHTML = `
-        <div class="prediction-top">
-          <div class="prediction-dot" aria-hidden="true"></div>
-          <div class="prediction-name">${p.label}</div>
-        </div>
-        <div class="prediction-data">
-          ${p.kmValue && p.dateValue
-            ? `<div class="prediction-km">${p.kmValue}</div><div class="prediction-ou">ou ${p.dateValue}</div>`
-            : p.kmValue
-              ? `<div class="prediction-km">${p.kmValue}</div>`
-              : p.dateValue
-                ? `<div class="prediction-date">${p.dateValue}</div>`
-                : ''
-          }
-        </div>
-        <div class="prediction-sub">${p.overdue ? 'vencido' : 'vencimento'}</div>
-      `;
-      scroll.appendChild(card);
+    feitos.push({
+      tipo, label: labelServ(tipo), status,
+      valor: kmVence != null ? fmtKm(kmVence) : fmtMesAno(dataVence),
+      sub: kmVence != null && dataVence != null ? 'ou ' + fmtMesAno(dataVence) : ' ',
+      pct, pe, nota: iv.nota,
     });
   }
 
-  function renderTimeline(records) {
-    const timeline = document.getElementById('timeline');
-    const empty    = document.getElementById('timeline-empty');
-    const count    = document.getElementById('record-count');
+  const ordem = { late: 0, soon: 1, ok: 2 };
+  feitos.sort((a, b) => (ordem[a.status] ?? 3) - (ordem[b.status] ?? 3) || b.pct - a.pct);
+  return feitos.concat(novos);
+}
 
-    count.textContent = records.length
-      ? records.length + (records.length === 1 ? ' registro' : ' registros')
-      : '';
+/* ---------- Barra de situação ---------- */
+function renderSituacao(prev) {
+  const c = { late: 0, soon: 0, ok: 0, none: 0 };
+  prev.forEach(p => { c[p.status]++; });
+  const total = prev.length || 1;
 
-    timeline.innerHTML = '';
+  const defs = [
+    ['late', 'Vencido',      'var(--red-pure)',   'sit-late'],
+    ['soon', 'Vence logo',   'var(--amber-pure)', 'sit-soon'],
+    ['ok',   'Em dia',       'var(--green-pure)', 'sit-ok'],
+    ['none', 'Sem registro', 'var(--ink-3)',      'sit-none'],
+  ];
 
-    if (!records.length) {
-      empty.classList.add('visible');
-      return;
+  $('sit-bar').innerHTML = defs
+    .filter(([k]) => c[k] > 0)
+    .map(([k, , , cls]) => `<div class="sit-seg ${cls}" style="flex:${c[k]}"></div>`)
+    .join('');
+  $('sit-bar').setAttribute('aria-label',
+    defs.filter(([k]) => c[k] > 0).map(([k, nome]) => `${c[k]} ${nome.toLowerCase()}`).join(', '));
+
+  $('sit-legenda').innerHTML = defs.map(([k, nome, cor]) => `
+    <div class="leg">
+      <i style="background:${cor}"></i>
+      <span class="leg-nome">${nome}</span>
+      <span class="leg-val">${c[k]} <span class="leg-pct">(${Math.round(c[k] / total * 100)}%)</span></span>
+    </div>`).join('');
+}
+
+/* ---------- Cards de previsão ---------- */
+function renderPrevisoes(prev) {
+  $('prev-scroll').innerHTML = prev.map(p => {
+    const largura = Math.min(100, Math.round(p.pct * 100));
+    const medidor = p.status === 'none'
+      ? '<span class="medidor"></span>'
+      : `<span class="medidor"><span class="medidor-fill" style="width:${largura}%"></span></span>`;
+    return `
+      <article class="prev" data-s="${p.status}" role="listitem"${p.nota ? ` title="${esc(p.nota)}"` : ''}>
+        <span class="prev-nome">${esc(p.label)}</span>
+        <span class="prev-valor">${esc(p.valor)}</span>
+        <span class="prev-sub">${esc(p.sub)}</span>
+        <span class="medidor-wrap">
+          ${medidor}
+          <span class="prev-pe">${esc(p.pe)}</span>
+        </span>
+      </article>`;
+  }).join('');
+}
+
+/* ---------- Avisos ---------- */
+function calcularAvisos(prev) {
+  const avisos = [];
+  const hoje = new Date();
+
+  const vencidos = prev.filter(p => p.status === 'late');
+  if (vencidos.length) {
+    const nomes = vencidos.slice(0, 2).map(v => v.label.toLowerCase()).join(' e ');
+    const resto = vencidos.length > 2 ? ` e mais ${vencidos.length - 2}` : '';
+    avisos.push({
+      tipo: 'alerta',
+      html: `<b>${vencidos.length === 1 ? 'Um item venceu' : vencidos.length + ' itens venceram'}</b>: ${esc(nomes)}${resto}. Vale resolver antes da próxima viagem longa.`,
+    });
+  }
+
+  // Moto parada: cruza o tempo sem registro com o defeito conhecido da Fluo.
+  if (veiculoAtual === 'fluo' && estado.registros.length) {
+    const ultima = new Date(estado.registros[0].date + 'T00:00:00');
+    const dias = Math.round((hoje - ultima) / 86400000);
+    if (dias >= 14) {
+      avisos.push({
+        tipo: 'atencao',
+        html: `Sem registro há <b>${fmtDuracao(dias)}</b>. Se a moto está parada esse tempo todo, o Stop&amp;Start vai drenando a bateria — dê uma volta ou ponha no carregador.`,
+      });
     }
-
-    empty.classList.remove('visible');
-
-    records.forEach((r, i) => {
-      const item = document.createElement('div');
-      item.className = 'record-item';
-      item.setAttribute('role', 'listitem');
-      item.style.setProperty('--idx', i);
-
-      const label = r.otherLabel || SERVICE_LABELS[r.type] || r.type;
-      const color = SERVICE_COLORS[r.type] || SERVICE_COLORS['outro'];
-      const icon  = SERVICE_ICONS[r.type]  || SERVICE_ICONS['outro'];
-      const meta  = `${fmtDate(r.date)}  ·  ${fmtKm(r.mileage)}`;
-
-      item.style.setProperty('--svc-color', color);
-
-      const hasExtras = r.cost != null || r.location || r.description;
-
-      item.innerHTML = `
-        <div class="record-head">
-          <div class="record-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">${icon}</svg>
-          </div>
-          <div class="record-head-text">
-            <div class="record-service">${label}</div>
-            <div class="record-meta">${meta}</div>
-          </div>
-        </div>
-        ${hasExtras ? `
-        <div class="record-fields">
-          ${r.cost != null ? `
-          <div class="record-field">
-            <span class="record-field-label">Custo</span>
-            <span class="record-field-value accent">${fmtCost(r.cost)}</span>
-          </div>` : ''}
-          ${r.location ? `
-          <div class="record-field">
-            <span class="record-field-label">Local</span>
-            <span class="record-field-value">${r.location}</span>
-          </div>` : ''}
-          ${r.description ? `
-          <div class="record-field full">
-            <span class="record-field-label">Observação</span>
-            <span class="record-field-value">${r.description}</span>
-          </div>` : ''}
-        </div>` : ''}
-        <div class="record-actions">
-          <button class="btn-record-action" data-action="edit" data-id="${r.id}" aria-label="Editar ${label}">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-            </svg>
-          </button>
-          <button class="btn-record-action delete" data-action="delete" data-id="${r.id}" aria-label="Excluir ${label}">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="3 6 5 6 21 6"/>
-              <path d="M19 6l-1 14H6L5 6"/>
-              <path d="M10 11v6"/><path d="M14 11v6"/>
-              <path d="M9 6V4h6v2"/>
-            </svg>
-          </button>
-        </div>
-      `;
-
-      timeline.appendChild(item);
-    });
   }
 
-  function render() {
-    const car     = getCar();
-    const records = getRecords();
-    const infoEl  = document.getElementById('header-car-info');
-    if (infoEl) {
-      infoEl.textContent = car?.modelo
-        ? `${car.marca} ${car.modelo} · ${car.ano}`
-        : '';
+  // Kwid: lembrete do nível de óleo, que é o que protege a corrente.
+  if (veiculoAtual === 'kwid') {
+    const ult = estado.registros.find(r => r.type === 'nivel-oleo');
+    const dias = ult ? Math.round((hoje - new Date(ult.date + 'T00:00:00')) / 86400000) : null;
+    if (dias === null || dias >= 30) {
+      avisos.push({
+        tipo: 'atencao',
+        html: dias === null
+          ? 'Você ainda não registrou nenhuma <b>conferência de nível de óleo</b>. Neste motor é o que protege a corrente de comando — vale virar hábito mensal.'
+          : `Faz <b>${fmtDuracao(dias)}</b> desde a última conferência de nível de óleo. O manual admite consumo de até 0,5 L por 1.000 km.`,
+      });
     }
-    renderPredictions(records);
-    renderTimeline(records);
   }
 
-  // ============================================================
-  // WIZARD STATE
-  // ============================================================
+  return avisos;
+}
 
-  let wizardStep = 1;
-  let wizardEditId = null;
-  let wizardData = {};
+function renderAvisos(avisos) {
+  $('avisos').innerHTML = avisos.map(a => `
+    <div class="aviso ${a.tipo === 'alerta' ? 'alerta' : ''}">
+      ${a.tipo === 'alerta'
+        ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.6 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.6a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>'
+        : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg>'}
+      <span>${a.html}</span>
+    </div>`).join('');
+}
 
-  function goWizardStep(n) {
-    document.querySelectorAll('.wizard-step').forEach(s => {
-      const sn = parseInt(s.dataset.step);
-      s.classList.remove('active', 'past');
-      if (sn === n) s.classList.add('active');
-      else if (sn < n) s.classList.add('past');
-    });
-    wizardStep = n;
+/* ---------- Números ---------- */
+function renderStats(prev) {
+  const regs = estado.registros;
+  const comCusto = regs.filter(r => r.cost != null);
+  const gasto = comCusto.reduce((s, r) => s + Number(r.cost), 0);
 
-    document.querySelectorAll('.wiz-dot').forEach(d => {
-      const dn = parseInt(d.dataset.dot);
-      d.classList.remove('active', 'done');
-      if (dn === n) d.classList.add('active');
-      else if (dn < n) d.classList.add('done');
-    });
+  // A distância do período vai do registro mais antigo até o hodômetro de
+  // hoje — não até o último registro. Senão o custo por km fica inflado:
+  // divide o gasto inteiro por um pedaço pequeno da distância real.
+  const kms = regs.map(r => r.mileage);
+  const rodados = kms.length ? Math.max(0, kmRef() - Math.min(...kms)) : 0;
+  const custoKm = rodados > 0 && gasto > 0 ? gasto / rodados : null;
 
-    document.getElementById('wiz-back').style.visibility = n === 1 ? 'hidden' : 'visible';
+  const proximo = prev.find(p => p.status !== 'none' && /faltam/.test(p.pe));
+
+  if (regs.length < 2) { $('bloco-stats').hidden = true; return; }
+  $('bloco-stats').hidden = false;
+
+  const item = (k, ico, v) => `
+    <div>
+      <span class="stat-k">${k}</span>
+      <span class="stat-v">${svgIco(ico)}${v}</span>
+    </div>`;
+
+  $('stats').innerHTML = [
+    item('Rodados no período', 'gauge', `${fmtKmSec(rodados)} <small>km</small>`),
+    item('Gasto em manutenção', 'wrench', `<small>R$</small> ${gasto.toLocaleString('pt-BR', {maximumFractionDigits: 0})}`),
+    custoKm ? item('Custo por km', 'crosshair', `<small>R$</small> ${custoKm.toFixed(2).replace('.', ',')}`) : '',
+    proximo ? item('Próximo serviço', 'spark', esc(proximo.pe.replace('faltam ', ''))) : '',
+  ].join('');
+}
+
+/* ---------- Ficha técnica ---------- */
+function renderFicha() {
+  const v = VEICULOS[veiculoAtual];
+  $('ficha').innerHTML = v.ficha.map(([k, val]) => `
+    <div class="ficha-row"><span class="ficha-k">${esc(k)}</span><span class="ficha-v">${esc(val)}</span></div>
+  `).join('');
+}
+
+/* ---------- Problemas crônicos ---------- */
+function renderCronicos() {
+  const v = VEICULOS[veiculoAtual];
+  const lista = v.cronicos || [];
+  $('cronicos-conta').textContent = lista.length ? lista.length + (lista.length === 1 ? ' item' : ' itens') : '';
+  $('cronicos').innerHTML = lista.map((c, i) => `
+    <div class="acc-item" data-i="${i}">
+      <button class="acc-head" type="button" aria-expanded="false">
+        <span class="acc-ico">${svgIco(c.icone)}</span>
+        ${esc(c.titulo)}
+        <span class="acc-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+      </button>
+      <div class="acc-body">
+        ${esc(c.texto)}
+        <div class="acc-rec">
+          <div class="acc-rec-t">Recomendação</div>
+          ${esc(c.rec)}
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+/* ---------- Histórico ---------- */
+function renderHistorico() {
+  const regs = estado.registros;
+  $('hist-conta').textContent = regs.length ? regs.length + (regs.length === 1 ? ' registro' : ' registros') : '';
+
+  if (!regs.length) {
+    $('hist').innerHTML = '';
+    $('hist-vazio').style.display = '';
+    return;
   }
+  $('hist-vazio').style.display = 'none';
 
-  function openWizard(editId = null) {
-    wizardEditId = editId;
-    wizardData = {};
-
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('w-date').setAttribute('max', today);
-    document.getElementById('w-date').value     = today;
-    document.getElementById('w-km').value       = '';
-    document.getElementById('w-cost').value     = '';
-    document.getElementById('w-location').value = '';
-    document.getElementById('w-desc').value     = '';
-    document.querySelectorAll('.wiz-service-btn').forEach(b => b.classList.remove('selected'));
-    document.getElementById('wiz-outro-wrap').classList.remove('visible');
-    document.getElementById('w-outro').value = '';
-
-    if (editId) {
-      const rec = getRecords().find(r => r.id === editId);
-      if (rec) {
-        wizardData = { type: rec.type, otherLabel: rec.otherLabel ?? null };
-        document.getElementById('w-date').value     = rec.date;
-        document.getElementById('w-km').value       = rec.mileage;
-        document.getElementById('w-cost').value     = rec.cost ?? '';
-        document.getElementById('w-location').value = rec.location ?? '';
-        document.getElementById('w-desc').value     = rec.description ?? '';
-        if (rec.otherLabel) {
-          document.getElementById('w-outro').value = rec.otherLabel;
-        }
-        document.querySelectorAll('.wiz-service-btn').forEach(b => {
-          b.classList.toggle('selected', b.dataset.type === rec.type);
-        });
+  $('hist').innerHTML = regs.map((r, i) => {
+    const prox = regs[i + 1];
+    let gap = '';
+    if (prox) {
+      const dKm = r.mileage - prox.mileage;
+      const dDias = Math.round(
+        (new Date(r.date + 'T00:00:00') - new Date(prox.date + 'T00:00:00')) / 86400000
+      );
+      if (dKm > 0 || dDias > 0) {
+        const partes = [];
+        if (dKm > 0)   partes.push(`<b>${fmtKm(dKm)}</b> rodados`);
+        if (dDias > 0) partes.push(`em ${fmtDuracao(dDias)}`);
+        gap = `<div class="hist-gap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+          <span>${partes.join(' ')}</span>
+        </div>`;
       }
     }
 
-    goWizardStep(editId ? 2 : 1);
-    document.getElementById('wizard').classList.add('open');
-    document.getElementById('fab').setAttribute('aria-expanded', 'true');
-    document.getElementById('screen-app').setAttribute('inert', '');
-  }
+    const meta = [r.location, r.description].filter(Boolean).map(esc).join(' · ');
 
-  function closeWizard() {
-    document.getElementById('wizard').classList.remove('open');
-    document.getElementById('fab').setAttribute('aria-expanded', 'false');
-    document.getElementById('screen-app').removeAttribute('inert');
-    setTimeout(() => goWizardStep(1), 420);
-  }
+    return `
+      <div class="hist-row" style="--svc:${corServ(r.type)}">
+        <div class="hist-odo">
+          <span class="hist-km">${fmtKmSec(r.mileage)}</span>
+          <span class="hist-data">${fmtData(r.date)}</span>
+        </div>
+        <div class="hist-eixo"><span class="hist-dot"></span></div>
+        <div class="hist-body">
+          <div class="hist-nome">${esc(labelServ(r.type, r.otherLabel))}</div>
+          ${meta ? `<div class="hist-meta">${meta}</div>` : ''}
+          <div class="hist-acoes">
+            <button class="btn-acao" data-acao="editar" data-id="${r.id}" type="button" aria-label="Editar">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>
+            </button>
+            <button class="btn-acao del" data-acao="excluir" data-id="${r.id}" type="button" aria-label="Excluir">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+            </button>
+          </div>
+          ${gap}
+        </div>
+        <div class="hist-custo">${r.cost != null ? fmtR$(r.cost) : ''}</div>
+      </div>`;
+  }).join('');
+}
 
-  function validateStep2() {
-    const date = document.getElementById('w-date').value;
-    const km   = document.getElementById('w-km').value;
-    let ok = true;
-    const setErr = (id, errId, cond) => {
-      document.getElementById(id).classList.toggle('error', !cond);
-      document.getElementById(errId).classList.toggle('visible', !cond);
-      if (!cond) ok = false;
-    };
-    setErr('w-date', 'w-date-err', !!date);
-    setErr('w-km',   'w-km-err',   !!km && parseInt(km) >= 0);
-    return ok;
-  }
+/* ---------- Render geral ---------- */
+function render() {
+  const v = VEICULOS[veiculoAtual];
+  if (!v) return;
 
-  function submitWizard() {
-    const rawCost = parseFloat(document.getElementById('w-cost').value);
-    const data = {
-      type:        wizardData.type,
-      otherLabel:  wizardData.type === 'outro' ? (wizardData.otherLabel || null) : null,
-      date:        document.getElementById('w-date').value,
-      mileage:     parseInt(document.getElementById('w-km').value),
-      cost:        isNaN(rawCost) ? null : rawCost,
-      location:    document.getElementById('w-location').value.trim(),
-      description: document.getElementById('w-desc').value.trim(),
-    };
+  $('head-img').src = v.img;
+  $('head-img').alt = v.nome;
+  $('head-nome').textContent = v.nome;
+  $('head-det').textContent = v.detalhe;
 
-    if (wizardEditId) {
-      updateRecord(wizardEditId, data);
-      updateMaintenanceInSupabase(wizardEditId, data);
-      toast('✓  Registro atualizado');
-    } else {
-      const record = {
-        id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
-        ...data,
-        addedAt: new Date().toISOString(),
-      };
-      pushRecord(record);
-      insertMaintenanceToSupabase(record);
-      toast('✓  Registro salvo');
-    }
-    closeWizard();
+  const km = $('odo-valor');
+  km.textContent = estado.kmAtual != null ? fmtKm(estado.kmAtual) : 'definir km';
+  km.classList.toggle('vazio', estado.kmAtual == null);
+
+  const prev = calcularPrevisoes();
+  renderSituacao(prev);
+  renderPrevisoes(prev);
+  renderAvisos(calcularAvisos(prev));
+  renderStats(prev);
+  renderFicha();
+  renderCronicos();
+  renderHistorico();
+}
+
+/* ============================================================
+   SELETOR
+   ============================================================ */
+function renderSeletor() {
+  $('pick-list').innerHTML = Object.values(VEICULOS).map(v => {
+    const c = cacheDo(v.id);
+    const km = c.kmAtual != null ? fmtKm(c.kmAtual)
+             : (c.registros?.length ? fmtKm(Math.max(...c.registros.map(r => r.mileage))) : 'sem km ainda');
+    return `
+      <button class="veic-card" type="button" data-v="${v.id}">
+        <span class="veic-foto"><img src="${v.img}" alt=""></span>
+        <span class="veic-txt">
+          <span class="veic-nome">${esc(v.nome)}</span>
+          <span class="veic-det">${esc(v.detalhe)}</span>
+          <span class="veic-km">${km}</span>
+        </span>
+      </button>`;
+  }).join('');
+}
+
+/* ============================================================
+   AÇÕES
+   ============================================================ */
+function ordenar() {
+  estado.registros.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+}
+
+async function criarRegistro(dados) {
+  const registro = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
+    ...dados,
+    addedAt: new Date().toISOString(),
+  };
+  estado.registros.unshift(registro);
+  ordenar();
+  render();
+  await sincronizar(() => api('/registros', {
+    method: 'POST', body: JSON.stringify({ veiculo: veiculoAtual, registro }),
+  }));
+}
+
+async function atualizarRegistro(id, m) {
+  const i = estado.registros.findIndex(r => r.id === id);
+  if (i === -1) return;
+  estado.registros[i] = { ...estado.registros[i], ...m };
+  ordenar();
+  render();
+  await sincronizar(() => api('/registros/' + id, { method: 'PATCH', body: JSON.stringify(m) }));
+}
+
+async function excluirRegistro(id) {
+  const i = estado.registros.findIndex(r => r.id === id);
+  if (i === -1) return;
+  const [rem] = estado.registros.splice(i, 1);
+  render();
+  await sincronizar(() => api('/registros/' + id, { method: 'DELETE' }));
+
+  toast('Registro excluído', 6000, async () => {
+    estado.registros.splice(Math.min(i, estado.registros.length), 0, rem);
+    ordenar();
     render();
+    await sincronizar(() => api('/registros', {
+      method: 'POST', body: JSON.stringify({ veiculo: veiculoAtual, registro: rem }),
+    }));
+  });
+}
+
+async function definirKm(km) {
+  estado.kmAtual = km;
+  render();
+  await sincronizar(() => api('/veiculo/' + veiculoAtual + '/km', {
+    method: 'PUT', body: JSON.stringify({ kmAtual: km }),
+  }));
+}
+
+/* ============================================================
+   WIZARD
+   ============================================================ */
+let passo = 1, editId = null, dadosWiz = {};
+
+function irPasso(n) {
+  passo = n;
+  document.querySelectorAll('.wiz-passo').forEach(p => p.classList.toggle('ativo', +p.dataset.p === n));
+  document.querySelectorAll('.wiz-ponto').forEach(d => {
+    const dn = +d.dataset.p;
+    d.classList.toggle('ativo', dn === n);
+    d.classList.toggle('feito', dn < n);
+  });
+  $('wiz-voltar').style.visibility = n === 1 ? 'hidden' : 'visible';
+  $('wiz-pe').style.display = n === 1 ? 'none' : '';
+  $('wiz-pular').style.display = n === 3 ? '' : 'none';
+  $('wiz-avancar').textContent = n === 3 ? 'Registrar' : 'Próximo';
+  $('wiz-corpo').scrollTop = 0;
+}
+
+function montarServicos() {
+  const plano = planoDo(veiculoAtual);
+  $('serv-grid').innerHTML = Object.keys(plano).map(t => `
+    <button class="serv-btn" type="button" data-t="${t}" style="--svc:${corServ(t)}"${plano[t]?.nota ? ` title="${esc(plano[t].nota)}"` : ''}>
+      ${svgIco(icoServ(t))}<span>${esc(labelServ(t))}</span>
+    </button>`).join('');
+}
+
+function abrirWizard(id = null) {
+  editId = id;
+  dadosWiz = {};
+  const hoje = new Date().toISOString().split('T')[0];
+  $('w-data').max = hoje;
+  $('w-data').value = hoje;
+  $('w-km').value = estado.kmAtual ?? '';
+  $('w-custo').value = ''; $('w-local').value = ''; $('w-obs').value = ''; $('w-outro').value = '';
+  $('outro-wrap').style.display = 'none';
+  document.querySelectorAll('.serv-btn').forEach(b => b.classList.remove('sel'));
+  document.querySelectorAll('.erro-msg').forEach(e => e.classList.remove('on'));
+  document.querySelectorAll('.input').forEach(e => e.classList.remove('erro'));
+
+  if (id) {
+    const r = estado.registros.find(x => x.id === id);
+    if (r) {
+      dadosWiz = { type: r.type, otherLabel: r.otherLabel ?? null };
+      $('w-data').value = r.date;
+      $('w-km').value = r.mileage;
+      $('w-custo').value = r.cost ?? '';
+      $('w-local').value = r.location ?? '';
+      $('w-obs').value = r.description ?? '';
+      if (r.otherLabel) $('w-outro').value = r.otherLabel;
+      document.querySelectorAll('.serv-btn').forEach(b => b.classList.toggle('sel', b.dataset.t === r.type));
+    }
   }
 
-  function buildWizardServiceGrid() {
-    const grid = document.getElementById('wiz-service-grid');
-    Object.entries(SERVICE_LABELS).forEach(([type, label]) => {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'wiz-service-btn';
-      btn.dataset.type = type;
-      const icon = SERVICE_ICONS[type] || SERVICE_ICONS['outro'];
-      btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icon}</svg><span>${label}</span>`;
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.wiz-service-btn').forEach(b => b.classList.remove('selected'));
-        btn.classList.add('selected');
-        wizardData.type = type;
-        if (type === 'outro') {
-          document.getElementById('wiz-outro-wrap').classList.add('visible');
-          document.getElementById('w-outro').focus();
-        } else {
-          document.getElementById('wiz-outro-wrap').classList.remove('visible');
-          wizardData.otherLabel = null;
-          setTimeout(() => goWizardStep(2), 200);
-        }
-      });
-      grid.appendChild(btn);
-    });
-  }
+  irPasso(id ? 2 : 1);
+  $('wiz').classList.add('open');
+  $('screen-app').setAttribute('inert', '');
+}
 
-  buildWizardServiceGrid();
+function fecharWizard() {
+  $('wiz').classList.remove('open');
+  $('screen-app').removeAttribute('inert');
+  setTimeout(() => irPasso(1), 400);
+}
 
-  document.getElementById('wiz-outro-next').addEventListener('click', () => {
-    const val = document.getElementById('w-outro').value.trim();
-    wizardData.otherLabel = val || null;
-    goWizardStep(2);
-  });
-  goWizardStep(1);
+function validarPasso2() {
+  const data = $('w-data').value;
+  const km = $('w-km').value;
+  let ok = true;
+  const set = (inp, err, cond) => {
+    $(inp).classList.toggle('erro', !cond);
+    $(err).classList.toggle('on', !cond);
+    if (!cond) ok = false;
+  };
+  set('w-data', 'e-data', !!data);
+  set('w-km', 'e-km', km !== '' && parseInt(km) >= 0);
+  return ok;
+}
 
-  function updateRecord(id, changes) {
-    const recs = getRecords();
-    const idx  = recs.findIndex(r => r.id === id);
-    if (idx === -1) return;
-    recs[idx] = { ...recs[idx], ...changes };
-    saveRecords(recs);
-  }
+async function enviarWizard() {
+  if (!dadosWiz.type) { irPasso(1); return; }
+  if (!validarPasso2()) { irPasso(2); return; }
 
-  function deleteRecord(id) {
-    const recs = getRecords();
-    const idx  = recs.findIndex(r => r.id === id);
-    if (idx === -1) return;
-    const [deleted] = recs.splice(idx, 1);
-    saveRecords(recs);
-    deleteMaintenanceFromSupabase(id);
-    render();
-    toast('Registro excluído', 6000, () => {
-      const current = getRecords();
-      current.splice(Math.min(idx, current.length), 0, deleted);
-      saveRecords(current);
-      insertMaintenanceToSupabase(deleted);
-      render();
-    });
-  }
+  const custo = parseFloat($('w-custo').value);
+  const km = parseInt($('w-km').value);
+  const dados = {
+    type: dadosWiz.type,
+    otherLabel: dadosWiz.type === 'outro' ? (dadosWiz.otherLabel || null) : null,
+    date: $('w-data').value,
+    mileage: km,
+    cost: isNaN(custo) ? null : custo,
+    location: $('w-local').value.trim(),
+    description: $('w-obs').value.trim(),
+  };
 
-  // Delete confirm modal
-  let _pendingDeleteId = null;
-  function openDeleteConfirm(id) {
-    const rec = getRecords().find(r => r.id === id);
-    if (!rec) return;
-    _pendingDeleteId = id;
-    const label = SERVICE_LABELS[rec.type] || rec.type;
-    document.getElementById('delete-confirm-preview').textContent =
-      `${label}  ·  ${fmtDate(rec.date)}  ·  ${fmtKm(rec.mileage)}`;
-    document.getElementById('delete-confirm-overlay').classList.add('visible');
-    document.getElementById('btn-delete-ok').focus();
-  }
+  fecharWizard();
 
-  document.getElementById('btn-delete-cancel').addEventListener('click', () => {
-    document.getElementById('delete-confirm-overlay').classList.remove('visible');
-    _pendingDeleteId = null;
-  });
+  if (editId) { await atualizarRegistro(editId, dados); toast('Registro atualizado'); }
+  else        { await criarRegistro(dados);            toast('Registro salvo'); }
 
-  document.getElementById('btn-delete-ok').addEventListener('click', () => {
-    if (_pendingDeleteId) deleteRecord(_pendingDeleteId);
-    document.getElementById('delete-confirm-overlay').classList.remove('visible');
-    _pendingDeleteId = null;
-  });
+  // O hodômetro não anda para trás.
+  if (estado.kmAtual == null || km > estado.kmAtual) await definirKm(km);
+}
 
-  document.getElementById('delete-confirm-overlay').addEventListener('keydown', e => {
-    if (e.key === 'Escape') {
-      document.getElementById('delete-confirm-overlay').classList.remove('visible');
-      _pendingDeleteId = null;
-    }
-  });
+/* ============================================================
+   EXCLUSÃO
+   ============================================================ */
+let idExcluir = null;
 
-  // Delegate edit/delete clicks from the timeline
-  document.getElementById('timeline').addEventListener('click', e => {
-    const btn = e.target.closest('.btn-record-action');
-    if (!btn) return;
-    const { action, id } = btn.dataset;
-    if (action === 'edit') openWizard(id);
-    if (action === 'delete') openDeleteConfirm(id);
-  });
+function abrirConf(id) {
+  const r = estado.registros.find(x => x.id === id);
+  if (!r) return;
+  idExcluir = id;
+  $('conf-prev').textContent = `${labelServ(r.type, r.otherLabel)} · ${fmtData(r.date)} · ${fmtKm(r.mileage)}`;
+  $('conf').classList.add('on');
+  $('conf-sim').focus();
+}
+function fecharConf() { $('conf').classList.remove('on'); idExcluir = null; }
 
-  // ============================================================
-  // FORM — REGISTRATION
-  // ============================================================
+/* ============================================================
+   EVENTOS
+   ============================================================ */
+$('pick-list').addEventListener('click', e => {
+  const c = e.target.closest('.veic-card');
+  if (c) abrirVeiculo(c.dataset.v);
+});
 
-  document.getElementById('form-register').addEventListener('submit', async e => {
-    e.preventDefault();
+$('btn-trocar').addEventListener('click', () => {
+  localStorage.removeItem(STORE_VEICULO);
+  veiculoAtual = null;
+  renderSeletor();
+  mostrarTela('screen-picker');
+});
 
-    const marca  = document.getElementById('input-marca').value.trim();
-    const modelo = document.getElementById('input-modelo').value.trim();
-    const anoVal = parseInt(document.getElementById('input-ano').value);
-    const placa  = document.getElementById('input-placa').value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+$('odo').addEventListener('click', () => {
+  const r = prompt('Quilometragem atual do veículo:', estado.kmAtual ?? '');
+  if (r === null) return;
+  const km = parseInt(String(r).replace(/\D/g, ''), 10);
+  if (isNaN(km) || km < 0) { toast('Quilometragem inválida'); return; }
+  definirKm(km);
+  toast('Quilometragem atualizada');
+});
 
-    let ok = true;
+$('hist').addEventListener('click', e => {
+  const b = e.target.closest('.btn-acao');
+  if (!b) return;
+  if (b.dataset.acao === 'editar') abrirWizard(b.dataset.id);
+  if (b.dataset.acao === 'excluir') abrirConf(b.dataset.id);
+});
 
-    if (!marca) {
-      document.getElementById('input-marca').classList.add('error');
-      document.getElementById('marca-error').classList.add('visible');
-      ok = false;
-    } else {
-      document.getElementById('input-marca').classList.remove('error');
-      document.getElementById('marca-error').classList.remove('visible');
-    }
+$('cronicos').addEventListener('click', e => {
+  const h = e.target.closest('.acc-head');
+  if (!h) return;
+  const item = h.closest('.acc-item');
+  const aberto = item.classList.toggle('open');
+  h.setAttribute('aria-expanded', aberto ? 'true' : 'false');
+});
 
-    if (!modelo) {
-      document.getElementById('input-modelo').classList.add('error');
-      document.getElementById('modelo-error').classList.add('visible');
-      ok = false;
-    } else {
-      document.getElementById('input-modelo').classList.remove('error');
-      document.getElementById('modelo-error').classList.remove('visible');
-    }
-
-    const currentYear = new Date().getFullYear();
-    if (!anoVal || anoVal < 1970 || anoVal > currentYear + 1) {
-      document.getElementById('input-ano').classList.add('error');
-      document.getElementById('ano-error').classList.add('visible');
-      ok = false;
-    } else {
-      document.getElementById('input-ano').classList.remove('error');
-      document.getElementById('ano-error').classList.remove('visible');
-    }
-
-    const placaValida = /^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/.test(placa);
-    if (!placaValida) {
-      document.getElementById('input-placa').classList.add('error');
-      document.getElementById('placa-error').classList.add('visible');
-      ok = false;
-    } else {
-      document.getElementById('input-placa').classList.remove('error');
-      document.getElementById('placa-error').classList.remove('visible');
-    }
-
-    if (!ok) return;
-
-    const btn = document.getElementById('btn-register');
-    btn.classList.add('loading');
-    btn.textContent = 'Consultando…';
-
-    // Check if plate already exists in Supabase
-    const existing = await fetchCarFromSupabase(placa);
-    if (existing) {
-      btn.textContent = 'Carregando seus dados…';
-      const [existingIntervals, records] = await Promise.all([
-        fetchCarData(existing.marca, existing.modelo, existing.ano).then(r => r.intervals).catch(() => null),
-        fetchRecordsFromSupabase(placa),
-      ]);
-      saveCar({ placa: existing.placa, marca: existing.marca, modelo: existing.modelo, ano: existing.ano, intervals: existingIntervals, addedAt: existing.created_at });
-      saveRecords(records);
-      btn.classList.remove('loading');
-      btn.textContent = 'Começar a registrar';
-      render();
-      showScreen('screen-app');
-      return;
-    }
-
-    let intervals = null;
-    try {
-      const result = await fetchCarData(marca, modelo, anoVal);
-      intervals = result.intervals ?? null;
-    } catch (err) {
-      console.error('[PrevCar] Groq error:', err);
-      toast('Não foi possível buscar dados do veículo. Usando intervalos padrão.');
-    }
-
-    const carData = { placa, marca, modelo, ano: anoVal, intervals, addedAt: new Date().toISOString() };
-    saveCar(carData);
-    saveCarToSupabase(carData);
-    btn.classList.remove('loading');
-    btn.textContent = 'Começar a registrar';
-    render();
-    showScreen('screen-app');
-  });
-
-
-  // ============================================================
-  // PLACA INPUT AUTO-UPPERCASE
-  // ============================================================
-
-  document.getElementById('input-placa').addEventListener('input', function () {
-    const pos = this.selectionStart;
-    this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-    this.setSelectionRange(pos, pos);
-  });
-
-  // ============================================================
-  // WIZARD CONTROLS
-  // ============================================================
-
-  document.getElementById('fab').addEventListener('click', () => openWizard());
-  document.getElementById('wiz-close').addEventListener('click', closeWizard);
-  document.getElementById('wiz-back').addEventListener('click', () => {
-    if (wizardStep > 1) goWizardStep(wizardStep - 1);
-  });
-  document.getElementById('wiz-next-2').addEventListener('click', () => {
-    if (validateStep2()) goWizardStep(3);
-  });
-  document.getElementById('wiz-skip').addEventListener('click', submitWizard);
-  document.getElementById('wiz-submit').addEventListener('click', submitWizard);
-
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape' && document.getElementById('wizard').classList.contains('open')) {
-      closeWizard();
-    }
-  });
-
-  // ============================================================
-  // CONFIRM DIALOG
-  // ============================================================
-
-  document.getElementById('btn-change-car').addEventListener('click', () => {
-    localStorage.removeItem(STORE_CAR);
-    localStorage.removeItem(STORE_RECORDS);
-    document.getElementById('input-marca').value  = '';
-    document.getElementById('input-modelo').value = '';
-    document.getElementById('input-ano').value    = '';
-    document.getElementById('input-placa').value  = '';
-    showScreen('screen-register');
-    document.getElementById('input-marca').focus();
-  });
-
-  // ============================================================
-  // INIT
-  // ============================================================
-
-  // ============================================================
-
-  // init wizard date default
-  document.getElementById('w-date').value = new Date().toISOString().split('T')[0];
-
-  const car = getCar();
-  if (car) {
-    render();
-    showScreen('screen-app');
+$('serv-grid').addEventListener('click', e => {
+  const b = e.target.closest('.serv-btn');
+  if (!b) return;
+  document.querySelectorAll('.serv-btn').forEach(x => x.classList.remove('sel'));
+  b.classList.add('sel');
+  dadosWiz.type = b.dataset.t;
+  if (b.dataset.t === 'outro') {
+    $('outro-wrap').style.display = '';
+    $('w-outro').focus();
   } else {
-    showScreen('screen-register');
+    $('outro-wrap').style.display = 'none';
+    dadosWiz.otherLabel = null;
+    setTimeout(() => irPasso(2), 180);
   }
+});
+
+$('outro-ok').addEventListener('click', () => {
+  dadosWiz.otherLabel = $('w-outro').value.trim() || null;
+  irPasso(2);
+});
+
+$('fab').addEventListener('click', () => abrirWizard());
+$('wiz-fechar').addEventListener('click', fecharWizard);
+$('wiz-voltar').addEventListener('click', () => { if (passo > 1) irPasso(passo - 1); });
+$('wiz-pular').addEventListener('click', enviarWizard);
+$('wiz-avancar').addEventListener('click', () => {
+  if (passo === 2) { if (validarPasso2()) irPasso(3); }
+  else if (passo === 3) enviarWizard();
+});
+
+$('conf-nao').addEventListener('click', fecharConf);
+$('conf-sim').addEventListener('click', () => { if (idExcluir) excluirRegistro(idExcluir); fecharConf(); });
+$('conf').addEventListener('click', e => { if (e.target === $('conf')) fecharConf(); });
+
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if ($('conf').classList.contains('on')) fecharConf();
+  else if ($('wiz').classList.contains('open')) fecharWizard();
+});
+
+/* ============================================================
+   INÍCIO
+   ============================================================ */
+async function abrirVeiculo(id) {
+  if (!VEICULOS[id]) return;
+  veiculoAtual = id;
+  localStorage.setItem(STORE_VEICULO, id);
+
+  estado = cacheDo(id);      // pinta na hora com o que já temos
+  montarServicos();
+  render();
+  mostrarTela('screen-app');
+
+  await carregar(id);        // e atualiza quando a rede responder
+  render();
+}
+
+$('w-data').value = new Date().toISOString().split('T')[0];
+irPasso(1);
+renderSeletor();
+
+const salvo = localStorage.getItem(STORE_VEICULO);
+if (salvo && VEICULOS[salvo]) abrirVeiculo(salvo);
+else mostrarTela('screen-picker');
 </script>
 </body>
 </html>
