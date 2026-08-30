@@ -4,7 +4,8 @@ Controle de manutenção do **Renault Kwid 2021** e da **Yamaha Fluo 125 2023**.
 App de uma página só, sem build, sem dependência externa.
 
 - Dados em **Cloudflare D1** (SQLite serverless) — não hiberna por inatividade.
-- API em **Cloudflare Pages Functions** (`functions/api/[[path]].js`).
+- Publicado como um **Worker** com assets estáticos (`public/`) + um Worker script (`worker/index.js`)
+  que atende `/api/*` e delega o resto para os arquivos estáticos.
 - `localStorage` como cache: o app abre e funciona offline, e sincroniza quando a rede volta.
 
 ## Por que saiu do Supabase
@@ -19,7 +20,7 @@ O uso real aqui é de algumas dezenas de escritas **por ano**.
 ## Plano de manutenção
 
 Os intervalos ficam todos no bloco `PLANO DE MANUTENÇÃO`, no topo do `<script>` do
-`index.html`. Para mudar um prazo, altere o número lá — nada mais precisa mudar.
+`public/index.html`. Para mudar um prazo, altere o número lá — nada mais precisa mudar.
 
 **Yamaha Fluo 125** — números do manual do proprietário BJF-F8199-W0 (2023),
 capítulo 8, tabelas de manutenção periódica. Fonte oficial.
@@ -40,41 +41,45 @@ Dois itens nasceram da pesquisa de problemas crônicos, não do calendário de r
 
 ## Como publicar no Cloudflare
 
-Tudo pelo painel — não precisa de Node nem do Wrangler na máquina.
+Tudo pelo painel — não precisa de Node nem do Wrangler instalado na máquina. O
+`npx wrangler deploy` que o Cloudflare pede roda do lado **deles**, num container de
+build; é o mesmo princípio do antigo Pages, só que a tela de criação mudou.
 
-### 1. Criar o banco
+> **Nota:** a Cloudflare unificou Pages e Workers numa única tela de criação, e hoje
+> o destaque do painel é "Create a Worker" → importar do Git. O projeto está
+> estruturado para esse fluxo (`wrangler.jsonc` + `worker/index.js` + `public/`),
+> não para o antigo "Pages → Connect to Git" — se você ver essa opção separada em
+> algum lugar do painel, ignore, ela não combina com o repo.
+
+### 1. Criar o banco D1
 
 1. Painel do Cloudflare → **Storage & Databases** → **D1** → **Create database**
 2. Nome: `prevcar` → **Create**
-3. Abra o banco → aba **Console**
-4. Cole o conteúdo de [`schema.sql`](schema.sql) e execute
+3. Na página do banco recém-criado, copie o **Database ID** (aparece no topo, um UUID)
+4. Abra a aba **Console** do banco, cole o conteúdo de [`schema.sql`](schema.sql) e execute
 
-### 2. Criar o projeto Pages
+### 2. Colocar o Database ID no repo
 
-1. **Compute (Workers & Pages)** → **Create** → aba **Pages** → **Connect to Git**
-2. Escolha o repositório `brnldy/prevcar`, branch `main`
-3. Build settings:
-   - Framework preset: **None**
-   - Build command: *(deixe vazio)*
-   - Build output directory: `/`
+Abra [`wrangler.jsonc`](wrangler.jsonc) e troque `SUBSTITUA_PELO_DATABASE_ID` pelo ID
+copiado no passo anterior. Dá para editar direto pelo GitHub (ícone de lápis no
+arquivo) — não precisa clonar nada. Um `database_id` não é segredo, pode ir num
+repo público sem problema.
+
+### 3. Criar o Worker
+
+1. **Compute (Workers & Pages)** → **Create** → **Import a repository** (ou
+   "Create a Worker" → **Deploy from Git**)
+2. Escolha `brnldy/prevcar`, branch `main`
+3. Deixe o **Deploy command** no padrão (`npx wrangler deploy`) — ele lê o
+   `wrangler.jsonc` do repo sozinho, inclusive o binding do D1
 4. **Save and Deploy**
 
-> A integração com Git é necessária porque **arrastar a pasta não compila
-> Pages Functions** — só o Git ou o Wrangler fazem isso. Como o build roda no
-> lado do Cloudflare, a máquina local não precisa de nada instalado.
-
-### 3. Ligar o banco no projeto
-
-1. No projeto Pages → **Settings** → **Bindings** → **Add** → **D1 database**
-2. Variable name: `DB` *(exatamente assim — é o nome que o código procura)*
-3. D1 database: `prevcar`
-4. Salve e faça um **Retry deployment** no último deploy, para o binding valer
-
-Pronto. O endereço fica em `prevcar.pages.dev` (ou o nome que o projeto receber).
+Pronto. O endereço fica em `prevcar.<sua-conta>.workers.dev`, ou o domínio que
+você apontar depois em **Settings → Domains & Routes**.
 
 ### Isso mexe no portfólio?
 
-Não. É um projeto Pages separado, com repositório, domínio e deploy próprios.
+Não. É um Worker separado, com repositório, domínio e deploy próprios.
 O fluxo de arrastar a pasta `_DEPLOY` do portfólio continua igual.
 
 ## Depois de publicar

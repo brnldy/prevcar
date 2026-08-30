@@ -1,8 +1,11 @@
 /**
- * API do PrevCar — Cloudflare Pages Function + D1.
+ * PrevCar — Worker único: serve o site estático (public/) e a API (/api/*)
+ * sobre D1. Convertido do formato Pages Functions para o Worker unificado
+ * (a rota /api/* é forçada para cá por run_worker_first no wrangler.jsonc;
+ * tudo o mais cai direto no binding ASSETS).
  *
- * Roteia tudo sob /api/*. Precisa de um binding D1 chamado DB
- * (Pages > Settings > Bindings > D1 database > Variable name: DB).
+ * Precisa de um binding D1 chamado DB — já declarado em wrangler.jsonc,
+ * apontando para o database_id do banco "prevcar".
  *
  * Rotas:
  *   GET    /api/dados?veiculo=kwid     -> { kmAtual, registros[] }
@@ -39,20 +42,15 @@ function paraRegistro(row) {
   };
 }
 
-export async function onRequest(context) {
-  const { request, env, params } = context;
+async function tratarApi(request, env, segmentos) {
   const db = env.DB;
-
   if (!db) return erro('Binding D1 "DB" não configurado neste projeto.', 500);
 
-  const segmentos = Array.isArray(params.path) ? params.path : (params.path ? [params.path] : []);
   const [recurso, id, sub] = segmentos;
   const metodo = request.method.toUpperCase();
 
   try {
-    // ----------------------------------------------------------
     // GET /api/dados?veiculo=kwid
-    // ----------------------------------------------------------
     if (recurso === 'dados' && metodo === 'GET') {
       const veiculo = new URL(request.url).searchParams.get('veiculo');
       if (!veiculoValido(veiculo)) return erro('Veículo desconhecido.');
@@ -70,9 +68,7 @@ export async function onRequest(context) {
       });
     }
 
-    // ----------------------------------------------------------
     // POST /api/registros
-    // ----------------------------------------------------------
     if (recurso === 'registros' && !id && metodo === 'POST') {
       const corpo = await request.json();
       const { veiculo, registro } = corpo || {};
@@ -101,9 +97,7 @@ export async function onRequest(context) {
       return json({ ok: true }, 201);
     }
 
-    // ----------------------------------------------------------
     // PATCH /api/registros/:id
-    // ----------------------------------------------------------
     if (recurso === 'registros' && id && metodo === 'PATCH') {
       const m = await request.json();
 
@@ -137,17 +131,13 @@ export async function onRequest(context) {
       return json({ ok: true });
     }
 
-    // ----------------------------------------------------------
     // DELETE /api/registros/:id
-    // ----------------------------------------------------------
     if (recurso === 'registros' && id && metodo === 'DELETE') {
       await db.prepare(`DELETE FROM manutencoes WHERE id = ?`).bind(id).run();
       return json({ ok: true });
     }
 
-    // ----------------------------------------------------------
     // PUT /api/veiculo/:id/km
-    // ----------------------------------------------------------
     if (recurso === 'veiculo' && id && sub === 'km' && metodo === 'PUT') {
       if (!veiculoValido(id)) return erro('Veículo desconhecido.');
       const { kmAtual } = await request.json();
@@ -168,3 +158,15 @@ export async function onRequest(context) {
     return erro('Falha no servidor: ' + e.message, 500);
   }
 }
+
+export default {
+  async fetch(request, env) {
+    const url = new URL(request.url);
+    if (url.pathname.startsWith('/api/')) {
+      const segmentos = url.pathname.replace(/^\/api\/?/, '').split('/').filter(Boolean);
+      return tratarApi(request, env, segmentos);
+    }
+    // Qualquer outra rota: arquivo estático em public/.
+    return env.ASSETS.fetch(request);
+  },
+};
