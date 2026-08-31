@@ -22,19 +22,22 @@
   --line-soft:   #EFECE4;
   --ink:         #1B1A17;
   --ink-2:       #57534A;
-  --ink-3:       #8C877B;
+  --ink-3:       #767065;
 
   --amber:       #B47A00;
+  --amber-forte: #8F6100;
   --amber-pure:  #F5B01A;
   --amber-soft:  #FDF3DA;
   --amber-line:  #EBD49A;
 
   --green:       #1B7F43;
   --green-pure:  #22A757;
+  --green-forte: #197A3F;
   --green-soft:  #E3F2E8;
 
   --red:         #BE3A30;
   --red-pure:    #DB4C40;
+  --red-botao:   #CE4034;
   --red-soft:    #FBE8E6;
 
   --slate:       #3D6A99;
@@ -157,8 +160,8 @@ svg { display: block; }
 }
 .pilula::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 .pilula.vencido { background: var(--red-soft);   color: var(--red); }
-.pilula.perto   { background: var(--amber-soft); color: var(--amber); }
-.pilula.ok      { background: var(--green-soft); color: var(--green); }
+.pilula.perto   { background: var(--amber-soft); color: var(--amber-forte); }
+.pilula.ok      { background: var(--green-soft); color: var(--green-forte); }
 
 @media (max-width: 379px) {
   .pilula { font-size: 11px; padding: 4px 9px 4px 7px; }
@@ -572,7 +575,7 @@ svg { display: block; }
 }
 .btn:active { transform: scale(0.985); }
 .btn-primario { background: var(--amber-pure); border-color: var(--amber-pure); color: #1B1A17; }
-.btn-perigo { background: var(--red-pure); border-color: var(--red-pure); color: #fff; }
+.btn-perigo { background: var(--red-botao); border-color: var(--red-botao); color: #FFFDFC; }
 
 /* ============================================================
    CONFIRMAÇÃO
