@@ -15,7 +15,7 @@
    ============================================================ */
 :root {
   --ground:      #FBFAF7;
-  --surface:     #FFFFFF;
+  --surface:     #FFFEFB;
   --surface-2:   #F4F2EC;
   --surface-3:   #EDEAE2;
   --line:        #E4E0D6;
@@ -107,12 +107,16 @@ svg { display: block; }
 #screen-picker { min-height: 100dvh; }
 #screen-picker.active { display: flex; flex-direction: column; }
 
+/* Ancorado embaixo, encostando no bloco dos veículos. Centralizado, o
+   grupo flutuava no meio de uma faixa alta e abria uma zona morta acima
+   e abaixo — espaço sem função, que fazia a tela parecer inacabada. */
 .pick-top {
   flex: 1;
-  padding: max(var(--sp-12), env(safe-area-inset-top)) var(--sp-6) var(--sp-8);
-  display: flex; flex-direction: column; justify-content: center; gap: var(--sp-5);
+  padding: max(var(--sp-8), env(safe-area-inset-top)) var(--sp-6) var(--sp-8);
+  display: flex; flex-direction: column; justify-content: flex-end; gap: var(--sp-4);
   max-width: 560px; margin: 0 auto; width: 100%;
 }
+.pick-top .brand { margin-bottom: var(--sp-6); }
 
 .brand { display: flex; align-items: center; gap: var(--sp-2); }
 .brand svg { width: 30px; height: 30px; }
@@ -225,6 +229,8 @@ svg { display: block; }
   background: var(--surface); flex: none;
 }
 .btn-trocar svg { width: 13px; height: 13px; }
+.btn-trocar { position: relative; }
+.btn-trocar::after { content: ''; position: absolute; inset: -5px -4px; }
 .btn-trocar:hover { border-color: var(--amber-pure); color: var(--ink); }
 
 /* ============================================================
@@ -254,6 +260,8 @@ svg { display: block; }
   padding: 4px 8px; margin: 0; border-radius: var(--r-sm);
   color: var(--ink-3); transition: background 140ms var(--ease), color 140ms var(--ease);
 }
+.odo { position: relative; }
+.odo::after { content: ''; position: absolute; inset: -9px -6px; }
 .odo:hover { background: var(--surface-2); color: var(--ink-2); }
 .odo-valor { font-size: var(--t-xs); font-weight: 600; font-variant-numeric: tabular-nums; }
 .odo svg { width: 12px; height: 12px; flex: none; opacity: 0.75; }
@@ -425,12 +433,18 @@ svg { display: block; }
 .hist-gap svg { width: 11px; height: 11px; flex: none; }
 
 .hist-acoes { display: flex; gap: var(--sp-1); margin-top: var(--sp-2); }
+/* O quadrado visível continua discreto; a área de toque cresce por fora
+   com o pseudo-elemento, para chegar aos 44px sem engordar o desenho. */
 .btn-acao {
-  width: 28px; height: 28px; border-radius: 7px;
+  width: 30px; height: 30px; border-radius: 7px;
   display: grid; place-items: center; color: var(--ink-3);
-  border: 1px solid transparent;
+  border: 1px solid transparent; position: relative;
 }
-.btn-acao svg { width: 14px; height: 14px; }
+.btn-acao::after {
+  content: ''; position: absolute;
+  inset: -7px; border-radius: 10px;
+}
+.btn-acao svg { width: 15px; height: 15px; }
 .btn-acao:hover { background: var(--surface-2); border-color: var(--line); color: var(--ink); }
 .btn-acao.del:hover { background: var(--red-soft); border-color: color-mix(in srgb, var(--red) 30%, transparent); color: var(--red); }
 
@@ -480,7 +494,7 @@ svg { display: block; }
   border-bottom: 1px solid var(--line);
 }
 .wiz-btn {
-  width: 36px; height: 36px; border-radius: 50%;
+  width: 44px; height: 44px; border-radius: 50%;
   display: grid; place-items: center; color: var(--ink-2);
   border: 1px solid var(--line); background: var(--surface); flex: none;
 }
