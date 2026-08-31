@@ -1,7 +1,3 @@
--- PrevCar — esquema do banco D1.
--- Cole este conteúdo no console SQL do D1 no painel do Cloudflare
--- (Storage & Databases > D1 > prevcar > Console) e execute uma vez.
-
 CREATE TABLE IF NOT EXISTS manutencoes (
   id             TEXT PRIMARY KEY,
   veiculo        TEXT    NOT NULL,
@@ -9,10 +5,11 @@ CREATE TABLE IF NOT EXISTS manutencoes (
   outro_label    TEXT,
   descricao      TEXT,
   data           TEXT    NOT NULL,
-  quilometragem  INTEGER,          -- opcional: nem toda nota traz o hodômetro
+  quilometragem  INTEGER,
   custo          REAL,
   local          TEXT,
-  criado_em      TEXT    NOT NULL
+  criado_em      TEXT    NOT NULL,
+  itens          TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_manutencoes_veiculo

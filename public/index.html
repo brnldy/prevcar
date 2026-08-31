@@ -441,6 +441,41 @@ svg { display: block; }
 .serv-btn:hover { border-color: var(--amber-pure); }
 .serv-btn.sel { background: var(--amber-soft); border-color: var(--amber-pure); }
 
+/* ---------- Seleção múltipla de filtros ---------- */
+.filtros-wrap {
+  margin-top: var(--sp-5); display: flex; flex-direction: column; gap: var(--sp-3);
+}
+.filtros-titulo { font-size: 14px; font-weight: 600; color: var(--ink-2); }
+.filtros-lista { display: flex; flex-direction: column; gap: var(--sp-2); }
+
+.filtro-op {
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4); cursor: pointer;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md);
+  transition: border-color 140ms var(--ease), background 140ms var(--ease);
+}
+.filtro-op:hover { border-color: var(--amber-pure); }
+.filtro-op input { position: absolute; opacity: 0; width: 0; height: 0; }
+/* O estado marcado vem de uma classe, não de :has(): o seletor casa mas
+   não repinta o próprio elemento de forma confiável neste engine. */
+.filtro-op.on { background: var(--amber-soft); border-color: var(--amber-pure); }
+.filtro-op:focus-within { outline: 2px solid var(--amber-pure); outline-offset: 2px; }
+
+.filtro-marca {
+  width: 20px; height: 20px; flex: none; border-radius: 6px;
+  border: 1.5px solid var(--line); background: var(--surface);
+  display: grid; place-items: center; color: transparent;
+}
+.filtro-marca svg { width: 12px; height: 12px; }
+.filtro-op.on .filtro-marca {
+  background: var(--amber-pure); border-color: var(--amber-pure); color: #1B1A17;
+}
+
+.filtro-ico { flex: none; }
+.filtro-ico svg { width: 18px; height: 18px; }
+.filtro-nome { flex: 1; font-size: 13.5px; font-weight: 600; }
+.filtro-int { font-size: 11.5px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+
 .campos { display: flex; flex-direction: column; gap: var(--sp-4); }
 .campo { display: flex; flex-direction: column; gap: 6px; }
 .campo-label { font-size: 12.5px; font-weight: 600; color: var(--ink-2); }
@@ -641,6 +676,13 @@ svg { display: block; }
           </div>
           <button class="btn btn-primario" id="outro-ok" type="button">Próximo</button>
         </div>
+
+        <div class="filtros-wrap" id="filtros-wrap" style="display:none">
+          <p class="filtros-titulo">Quais filtros entraram?</p>
+          <div class="filtros-lista" id="filtros-lista" role="group" aria-label="Filtros trocados"></div>
+          <span class="erro-msg" id="e-filtros">Escolha pelo menos um filtro.</span>
+          <button class="btn btn-primario" id="filtros-ok" type="button">Próximo</button>
+        </div>
       </div>
 
       <div class="wiz-passo" data-p="2">
@@ -726,10 +768,10 @@ const STORE_CACHE   = 'prevcar-cache-v3';
 
 const SERVICOS = {
   'revisao-geral':      { label: 'Revisão geral',            cor: '#22A757', icone: 'wrench' },
-  'troca-oleo':         { label: 'Óleo + filtro',            cor: '#E9962A', icone: 'oil' },
+  'troca-oleo':         { label: 'Óleo do motor',            cor: '#E9962A', icone: 'oil' },
   'nivel-oleo':         { label: 'Conferir nível de óleo',   cor: '#EFC020', icone: 'gauge' },
-  'filtro-oleo':        { label: 'Filtro de óleo (tela)',    cor: '#D98A2B', icone: 'filter' },
-  'filtros':            { label: 'Filtros ar + combustível', cor: '#8E63C4', icone: 'filter' },
+  'filtro-oleo':        { label: 'Filtro de óleo',           cor: '#D98A2B', icone: 'filter' },
+  'filtros':            { label: 'Filtros',                  cor: '#8E63C4', icone: 'filter' },
   'filtro-ar':          { label: 'Filtro de ar',             cor: '#8E63C4', icone: 'filter' },
   'filtro-cabine':      { label: 'Filtro da cabine',         cor: '#A264B8', icone: 'wind' },
   'filtro-cvt':         { label: 'Filtro de ar da CVT',      cor: '#7B68C9', icone: 'wind' },
@@ -758,12 +800,17 @@ const VEICULOS = {
     nome: 'Renault Kwid',
     detalhe: '2021 · 1.0 12V Flex',
     img: 'assets/kwid.png',
+    // Filtros entram por seleção múltipla num único registro "Filtros".
+    // Cada um segue previsto pelo seu próprio intervalo, abaixo.
+    filtros: ['filtro-oleo', 'filtro-ar', 'filtro-combustivel', 'filtro-cabine'],
     plano: {
-      'revisao-geral':  { km: 10000, dias: 365,  fonte: 'rede',   nota: 'Revisão programada Renault: 10.000 km ou 12 meses.' },
-      'troca-oleo':     { km: 10000, dias: 365,  fonte: 'rede',   nota: 'Óleo e filtro juntos. Especificação RN0700 / ACEA A3-B4.' },
-      'nivel-oleo':     { km: null,  dias: 30,   fonte: 'manual', nota: 'O manual admite consumo de até 0,5 L a cada 1.000 km como normal. A corrente de comando depende deste óleo.' },
-      'filtros':        { km: 20000, dias: null, fonte: 'rede',   nota: 'Filtro de ar e filtro de combustível.' },
-      'filtro-cabine':  { km: 15000, dias: 365,  fonte: 'rede',   nota: 'Filtro do ar-condicionado.' },
+      'revisao-geral':      { km: 10000, dias: 365,  fonte: 'rede',   nota: 'Revisão programada Renault: 10.000 km ou 12 meses.' },
+      'troca-oleo':         { km: 10000, dias: 365,  fonte: 'rede',   nota: 'Só o óleo do motor. Especificação RN0700 / ACEA A3-B4.' },
+      'nivel-oleo':         { km: null,  dias: 30,   fonte: 'manual', nota: 'O manual admite consumo de até 0,5 L a cada 1.000 km como normal. A corrente de comando depende deste óleo.' },
+      'filtro-oleo':        { km: 10000, dias: 365,  fonte: 'rede',   nota: 'Normalmente trocado junto com o óleo do motor.' },
+      'filtro-ar':          { km: 20000, dias: null, fonte: 'rede',   nota: 'Filtro de ar do motor.' },
+      'filtro-combustivel': { km: 20000, dias: null, fonte: 'rede',   nota: 'Filtro de combustível.' },
+      'filtro-cabine':      { km: 15000, dias: 365,  fonte: 'rede',   nota: 'Filtro do ar-condicionado.' },
       'velas':          { km: 40000, dias: 1460, fonte: 'rede',   nota: 'Use apenas as velas da etiqueta do compartimento do motor.' },
       'fluido-freio':   { km: 80000, dias: 1460, fonte: 'rede',   nota: 'Renault: 80.000 km ou 4 anos.' },
       'arrefecimento':  { km: 80000, dias: 1460, fonte: 'rede',   nota: 'Glaceol RX tipo D — 30% aditivo, 70% água desmineralizada.' },
@@ -781,9 +828,10 @@ const VEICULOS = {
     nome: 'Yamaha Fluo 125',
     detalhe: '2023 · ABS Hybrid',
     img: 'assets/fluo.png',
+    filtros: ['filtro-oleo', 'filtro-ar', 'filtro-cvt', 'filtro-combustivel'],
     plano: {
       'revisao-geral':      { km: 3000,  dias: 180,  fonte: 'manual', nota: 'Verificações a cada 3.000 km ou 6 meses. A partir dos 6.000 km o ciclo se repete a cada 3.000 km.' },
-      'troca-oleo':         { km: 3000,  dias: 180,  fonte: 'manual', nota: 'Yamalube 10W-40, API SL+, JASO MA/MB. 0,80 L na troca.' },
+      'troca-oleo':         { km: 3000,  dias: 180,  fonte: 'manual', nota: 'Só o óleo do motor. Yamalube 10W-40, API SL+, JASO MA/MB. 0,80 L na troca.' },
       'filtro-oleo':        { km: 6000,  dias: null, fonte: 'manual', nota: 'É uma tela — limpar, não substituir.' },
       'vela':               { km: 6000,  dias: null, fonte: 'manual', nota: 'Substituir a cada 6.000 km. NGK CR6HSA.' },
       'valvulas':           { km: 6000,  dias: null, fonte: 'manual', nota: 'Serviço de concessionária — exige ferramenta especial.' },
@@ -967,8 +1015,15 @@ function calcularPrevisoes() {
   const agora = new Date();
   const temKm = km > 0;
 
+  // Um registro do tipo "filtros" vale como último serviço de cada filtro
+  // marcado nele — assim cada um segue previsto pelo seu próprio intervalo.
   const ultimo = {};
-  for (const r of estado.registros) if (!ultimo[r.type]) ultimo[r.type] = r;
+  for (const r of estado.registros) {
+    if (!ultimo[r.type]) ultimo[r.type] = r;
+    if (r.type === 'filtros') {
+      for (const t of (r.items || [])) if (!ultimo[t]) ultimo[t] = r;
+    }
+  }
 
   const feitos = [];
   const novos = [];
@@ -1215,7 +1270,10 @@ function renderHistorico() {
       }
     }
 
-    const meta = [r.location, r.description].filter(Boolean).map(esc).join(' · ');
+    const listaFiltros = r.type === 'filtros' && (r.items || []).length
+      ? r.items.map(t => labelServ(t)).join(', ')
+      : null;
+    const meta = [listaFiltros, r.location, r.description].filter(Boolean).map(esc).join(' · ');
 
     return `
       <div class="hist-row" style="--svc:${corServ(r.type)}">
@@ -1358,12 +1416,42 @@ function irPasso(n) {
   $('wiz-corpo').scrollTop = 0;
 }
 
+function filtrosDo(v) { return VEICULOS[v]?.filtros ?? []; }
+
+/** Reflete o estado dos checkboxes na aparência das linhas. */
+function sincronizarFiltros() {
+  $('filtros-lista').querySelectorAll('.filtro-op').forEach(l => {
+    l.classList.toggle('on', l.querySelector('input').checked);
+  });
+}
+
 function montarServicos() {
   const plano = planoDo(veiculoAtual);
-  $('serv-grid').innerHTML = Object.keys(plano).map(t => `
+  const filtros = filtrosDo(veiculoAtual);
+
+  // Os filtros individuais saem da grade e viram um botão só, "Filtros",
+  // que abre a seleção múltipla. Cada um segue previsto separadamente.
+  const tipos = Object.keys(plano).filter(t => !filtros.includes(t));
+  const iFiltros = tipos.indexOf('troca-oleo');
+  if (filtros.length) tipos.splice(iFiltros >= 0 ? iFiltros + 1 : tipos.length, 0, 'filtros');
+
+  const botao = t => `
     <button class="serv-btn" type="button" data-t="${t}" style="--svc:${corServ(t)}"${plano[t]?.nota ? ` title="${esc(plano[t].nota)}"` : ''}>
       ${svgIco(icoServ(t))}<span>${esc(labelServ(t))}</span>
-    </button>`).join('');
+    </button>`;
+
+  $('serv-grid').innerHTML = tipos.map(botao).join('');
+
+  $('filtros-lista').innerHTML = filtros.map(t => `
+    <label class="filtro-op">
+      <input type="checkbox" value="${t}">
+      <span class="filtro-marca" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+      </span>
+      <span class="filtro-ico" style="color:${corServ(t)}">${svgIco(icoServ(t))}</span>
+      <span class="filtro-nome">${esc(labelServ(t))}</span>
+      <span class="filtro-int">${plano[t]?.km ? fmtKm(plano[t].km) : ''}</span>
+    </label>`).join('');
 }
 
 function abrirWizard(id = null) {
@@ -1375,6 +1463,9 @@ function abrirWizard(id = null) {
   $('w-km').value = estado.kmAtual ?? '';
   $('w-custo').value = ''; $('w-local').value = ''; $('w-obs').value = ''; $('w-outro').value = '';
   $('outro-wrap').style.display = 'none';
+  $('filtros-wrap').style.display = 'none';
+  $('filtros-lista').querySelectorAll('input').forEach(i => { i.checked = false; });
+  sincronizarFiltros();
   document.querySelectorAll('.serv-btn').forEach(b => b.classList.remove('sel'));
   document.querySelectorAll('.erro-msg').forEach(e => e.classList.remove('on'));
   document.querySelectorAll('.input').forEach(e => e.classList.remove('erro'));
@@ -1382,13 +1473,18 @@ function abrirWizard(id = null) {
   if (id) {
     const r = estado.registros.find(x => x.id === id);
     if (r) {
-      dadosWiz = { type: r.type, otherLabel: r.otherLabel ?? null };
+      dadosWiz = { type: r.type, otherLabel: r.otherLabel ?? null, items: r.items ?? [] };
       $('w-data').value = r.date;
-      $('w-km').value = r.mileage;
+      $('w-km').value = r.mileage ?? '';
       $('w-custo').value = r.cost ?? '';
       $('w-local').value = r.location ?? '';
       $('w-obs').value = r.description ?? '';
       if (r.otherLabel) $('w-outro').value = r.otherLabel;
+      (r.items || []).forEach(t => {
+        const cx = $('filtros-lista').querySelector(`input[value="${t}"]`);
+        if (cx) cx.checked = true;
+      });
+      sincronizarFiltros();
       document.querySelectorAll('.serv-btn').forEach(b => b.classList.toggle('sel', b.dataset.t === r.type));
     }
   }
@@ -1435,6 +1531,7 @@ async function enviarWizard() {
     cost: isNaN(custo) ? null : custo,
     location: $('w-local').value.trim(),
     description: $('w-obs').value.trim(),
+    items: dadosWiz.type === 'filtros' ? (dadosWiz.items || []) : [],
   };
 
   fecharWizard();
@@ -1497,15 +1594,35 @@ $('serv-grid').addEventListener('click', e => {
   if (!b) return;
   document.querySelectorAll('.serv-btn').forEach(x => x.classList.remove('sel'));
   b.classList.add('sel');
-  dadosWiz.type = b.dataset.t;
-  if (b.dataset.t === 'outro') {
-    $('outro-wrap').style.display = '';
+  const t = b.dataset.t;
+  dadosWiz.type = t;
+
+  $('outro-wrap').style.display   = t === 'outro'   ? '' : 'none';
+  $('filtros-wrap').style.display = t === 'filtros' ? '' : 'none';
+
+  if (t === 'outro') {
     $('w-outro').focus();
+  } else if (t === 'filtros') {
+    $('e-filtros').classList.remove('on');
+    $('filtros-wrap').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   } else {
-    $('outro-wrap').style.display = 'none';
     dadosWiz.otherLabel = null;
+    dadosWiz.items = [];
     setTimeout(() => irPasso(2), 180);
   }
+});
+
+$('filtros-ok').addEventListener('click', () => {
+  const marcados = [...$('filtros-lista').querySelectorAll('input:checked')].map(i => i.value);
+  if (!marcados.length) { $('e-filtros').classList.add('on'); return; }
+  $('e-filtros').classList.remove('on');
+  dadosWiz.items = marcados;
+  irPasso(2);
+});
+
+$('filtros-lista').addEventListener('change', () => {
+  $('e-filtros').classList.remove('on');
+  sincronizarFiltros();
 });
 
 $('outro-ok').addEventListener('click', () => {

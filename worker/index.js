@@ -39,6 +39,8 @@ function paraRegistro(row) {
     cost:        row.custo,
     location:    row.local || '',
     addedAt:     row.criado_em,
+    // Quais filtros entraram num registro do tipo "filtros".
+    items:       row.itens ? String(row.itens).split(',').filter(Boolean) : [],
   };
 }
 
@@ -82,8 +84,8 @@ async function tratarApi(request, env, segmentos) {
 
       await db.prepare(
         `INSERT OR REPLACE INTO manutencoes
-           (id, veiculo, tipo, outro_label, descricao, data, quilometragem, custo, local, criado_em)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+           (id, veiculo, tipo, outro_label, descricao, data, quilometragem, custo, local, criado_em, itens)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       ).bind(
         registro.id,
         veiculo,
@@ -94,7 +96,8 @@ async function tratarApi(request, env, segmentos) {
         registro.mileage ?? null,
         registro.cost ?? null,
         registro.location || null,
-        registro.addedAt || new Date().toISOString()
+        registro.addedAt || new Date().toISOString(),
+        Array.isArray(registro.items) && registro.items.length ? registro.items.join(',') : null
       ).run();
 
       return json({ ok: true }, 201);
@@ -122,6 +125,11 @@ async function tratarApi(request, env, segmentos) {
           colunas.push(`${coluna} = ?`);
           valores.push(m[chave] === '' ? null : m[chave]);
         }
+      }
+      // A lista de filtros vai serializada em uma coluna só.
+      if ('items' in m) {
+        colunas.push('itens = ?');
+        valores.push(Array.isArray(m.items) && m.items.length ? m.items.join(',') : null);
       }
       if (!colunas.length) return erro('Nada para atualizar.');
 
