@@ -893,6 +893,7 @@ const ICONES = {
   panel:      '<rect x="3" y="4" width="18" height="14" rx="2"/><path d="M7 20h10"/>',
   plus:       '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>',
   lista:      '<line x1="9" y1="6" x2="20" y2="6"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="18" x2="20" y2="18"/><circle cx="4.5" cy="6" r="1.3" fill="currentColor"/><circle cx="4.5" cy="12" r="1.3" fill="currentColor"/><circle cx="4.5" cy="18" r="1.3" fill="currentColor"/>',
+  clock:      '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
 };
 
 function svgIco(nome) {
@@ -980,13 +981,21 @@ function fmtIntervalo(i) {
   return p.join(' ou ');
 }
 
+/** Duração separada em número e unidade, para o número receber o mesmo
+ *  tratamento tipográfico dos outros e a unidade ficar sempre menor. */
+function fmtDuracaoPartes(dias) {
+  if (dias < 1)  return { n: '<1', u: 'dia' };
+  if (dias === 1) return { n: '1', u: 'dia' };
+  if (dias < 45)  return { n: String(dias), u: 'dias' };
+  const m = Math.round(dias / 30);
+  if (m < 24)     return { n: String(m), u: 'meses' };
+  return { n: (Math.round(dias / 365 * 10) / 10).toString().replace('.', ','), u: 'anos' };
+}
+
 function fmtDuracao(dias) {
   if (dias < 1) return 'menos de um dia';
-  if (dias === 1) return '1 dia';
-  if (dias < 45) return dias + ' dias';
-  const m = Math.round(dias / 30);
-  if (m < 24) return m + ' meses';
-  return (Math.round(dias / 365 * 10) / 10).toString().replace('.', ',') + ' anos';
+  const p = fmtDuracaoPartes(dias);
+  return p.n + ' ' + p.u;
 }
 
 function mostrarTela(id) {
@@ -1126,21 +1135,30 @@ function calcularPrevisoes() {
     const porData = diasFalta != null ? diasFalta      : Infinity;
     const diasAte = Math.min(porKm, porData);
 
-    let pe;
+    let pe, restante;
     if (status === 'late') {
-      pe = kmFalta != null && kmFalta <= 0 ? 'passou ' + fmtKm(-kmFalta)
-         : 'venceu há ' + fmtDuracao(-diasFalta);
+      if (kmFalta != null && kmFalta <= 0) {
+        pe = 'passou ' + fmtKm(-kmFalta);
+        restante = { n: fmtKmSec(-kmFalta), u: 'km', atrasado: true };
+      } else {
+        const p = fmtDuracaoPartes(-diasFalta);
+        pe = 'venceu há ' + fmtDuracao(-diasFalta);
+        restante = { n: p.n, u: p.u, atrasado: true };
+      }
     } else if (kmFalta != null) {
       pe = 'faltam ' + fmtKm(kmFalta);
+      restante = { n: fmtKmSec(kmFalta), u: 'km', atrasado: false };
     } else {
+      const p = fmtDuracaoPartes(diasFalta);
       pe = 'faltam ' + fmtDuracao(diasFalta);
+      restante = { n: p.n, u: p.u, atrasado: false };
     }
 
     feitos.push({
       tipo, label: labelServ(tipo), status,
       valor: kmVence != null ? fmtKm(kmVence) : fmtMesAno(dataVence),
       sub: kmVence != null && dataVence != null ? 'ou ' + fmtMesAno(dataVence) : ' ',
-      pct, diasAte, pe, nota: iv.nota,
+      pct, diasAte, pe, restante, nota: iv.nota,
     });
   }
 
@@ -1227,24 +1245,31 @@ function renderAvisos(avisos) {
 }
 
 /* ---------- Números ----------
-   Tudo aqui é contado desde o registro mais antigo, e a legenda diz isso.
-   Não existe custo por km: sem abastecimento registrado, dividir a
-   manutenção pela distância dá um número que não significa nada. */
+   Os dois primeiros medem há quanto tempo o veículo não recebe nada — é o
+   que responde "estou devendo cuidado a ele?". Não existe custo por km:
+   sem abastecimento registrado, dividir manutenção por distância dá um
+   número que não significa nada. */
 function renderStats(prev) {
   const regs = estado.registros;
+
+  if (!regs.length) { $('stats-wrap').hidden = true; return; }
+  $('stats-wrap').hidden = false;
+
   const gasto = regs.filter(r => r.cost != null).reduce((s, r) => s + Number(r.cost), 0);
 
-  const kms = regs.map(r => r.mileage).filter(k => k != null);
-  const rodados = kms.length ? Math.max(0, kmRef() - Math.min(...kms)) : 0;
+  // Desde o último serviço, seja ele qual for.
+  const ultimo = regs[0];
+  const diasParado = Math.max(0, Math.round(
+    (new Date() - new Date(ultimo.date + 'T00:00:00')) / 86400000
+  ));
+  const ultimoComKm = regs.find(r => r.mileage != null);
+  const kmParado = ultimoComKm ? Math.max(0, kmRef() - ultimoComKm.mileage) : null;
 
-  const proximo = prev.find(p => p.status !== 'none' && /faltam|passou|venceu/.test(p.pe));
-
-  if (regs.length < 2) { $('stats-wrap').hidden = true; return; }
-  $('stats-wrap').hidden = false;
+  const proximo = prev.find(p => p.restante);
 
   const desde = inicioPeriodo();
   $('stats-desde').textContent = desde
-    ? `Desde o primeiro registro, em ${fmtMesAno(desde).toLowerCase().replace('/', '/')}`
+    ? `Gasto e histórico contam desde ${fmtMesAno(desde).toLowerCase()}`
     : '';
 
   const item = (k, ico, v) => `
@@ -1253,11 +1278,18 @@ function renderStats(prev) {
       <span class="stat-v">${svgIco(ico)}${v}</span>
     </div>`;
 
+  const dur = fmtDuracaoPartes(diasParado);
+
   $('stats').innerHTML = [
-    rodados > 0 ? item('Rodados', 'gauge', `${fmtKmSec(rodados)} <small>km</small>`) : '',
+    item('Sem manutenção há', 'clock', `${dur.n} <small>${dur.u}</small>`),
+    kmParado != null
+      ? item('Rodados desde então', 'gauge', `${fmtKmSec(kmParado)} <small>km</small>`)
+      : item('Rodados desde então', 'gauge', '<small>sem km</small>'),
     item('Gasto em manutenção', 'wrench', `<small>R$</small> ${gasto.toLocaleString('pt-BR', {maximumFractionDigits: 0})}`),
-    item('Serviços registrados', 'lista', `${regs.length}`),
-    proximo ? item('Próximo serviço', 'spark', esc(proximo.pe.replace('faltam ', ''))) : '',
+    proximo
+      ? item('Próximo serviço', 'spark',
+          `${proximo.restante.n} <small>${proximo.restante.u}${proximo.restante.atrasado ? ' atrás' : ''}</small>`)
+      : '',
   ].join('');
 }
 
