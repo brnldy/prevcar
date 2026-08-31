@@ -191,21 +191,17 @@ svg { display: block; }
   border-radius: var(--r-lg); padding: var(--sp-5);
 }
 
-/* ---------- Hodômetro ---------- */
+/* ---------- Hodômetro ----------
+   Discreto de proposito: o km entra junto com o servico, nao e' algo
+   que se atualize toda hora. Fica so' como ajuste fino. */
 .odo {
-  display: flex; align-items: center; gap: var(--sp-3); width: 100%;
-  padding: var(--sp-3) var(--sp-4); margin-bottom: var(--sp-5);
-  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md);
-  transition: border-color 160ms var(--ease);
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 8px; margin: 0; border-radius: var(--r-sm);
+  color: var(--ink-3); transition: background 140ms var(--ease), color 140ms var(--ease);
 }
-.odo:hover { border-color: var(--amber-pure); }
-.odo-label { font-size: 12px; color: var(--ink-3); }
-.odo-valor {
-  margin-left: auto; font-size: 15px; font-weight: 700;
-  font-variant-numeric: tabular-nums; letter-spacing: -0.02em;
-}
-.odo-valor.vazio { color: var(--ink-3); font-weight: 400; letter-spacing: 0; }
-.odo svg { width: 14px; height: 14px; color: var(--ink-3); flex: none; }
+.odo:hover { background: var(--surface-2); color: var(--ink-2); }
+.odo-valor { font-size: 12.5px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.odo svg { width: 12px; height: 12px; flex: none; opacity: 0.75; }
 
 /* ---------- Aviso offline ---------- */
 .offline {
@@ -300,6 +296,10 @@ svg { display: block; }
 }
 
 /* ---------- Estatísticas ---------- */
+.card-rodape {
+  margin-top: var(--sp-5); padding-top: var(--sp-5);
+  border-top: 1px solid var(--line-soft);
+}
 .stats { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-4) var(--sp-5); }
 .stat-k { font-size: 11.5px; color: var(--ink-3); display: block; margin-bottom: 3px; }
 .stat-v {
@@ -310,79 +310,41 @@ svg { display: block; }
 .stat-v svg { width: 15px; height: 15px; color: var(--ink-3); flex: none; }
 .stat-v small { font-size: 12.5px; font-weight: 400; color: var(--ink-3); letter-spacing: 0; }
 
-/* ---------- Ficha técnica ---------- */
-/* Uma coluna no celular: rótulo + valor em duas colunas a 390px espreme
-   o valor e quebra "0,80 L · 10W-40" no meio. */
-.ficha-grid { display: grid; grid-template-columns: 1fr; gap: var(--sp-3); }
-@media (min-width: 460px) {
-  .ficha-grid { grid-template-columns: 1fr 1fr; gap: var(--sp-3) var(--sp-5); }
-}
-.ficha-row { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-2); font-size: 13px; }
-.ficha-k { color: var(--ink-3); }
-.ficha-v { font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
-
-.hr { height: 1px; background: var(--line); margin: var(--sp-4) 0; }
-
-.selo {
-  display: inline-block; font-size: 9.5px; font-weight: 700;
-  letter-spacing: 0.07em; text-transform: uppercase;
-  padding: 2px 6px; border-radius: 4px;
-}
-.selo-manual { background: var(--slate-soft); color: var(--slate); }
-.selo-rede   { background: var(--surface-3); color: var(--ink-3); }
-
-/* ---------- Problemas crônicos ---------- */
-.acc { display: flex; flex-direction: column; gap: var(--sp-2); }
-.acc-item {
-  border: 1px solid var(--line); border-radius: var(--r-md);
-  background: var(--surface); overflow: hidden;
-}
-.acc-item.open { border-color: var(--amber-line); }
-.acc-head {
-  display: flex; align-items: center; gap: var(--sp-3);
-  padding: var(--sp-3) var(--sp-4); width: 100%; text-align: left;
-  font-size: 13.5px; font-weight: 600; line-height: 1.3;
-}
-.acc-ico {
-  width: 30px; height: 30px; border-radius: 9px; flex: none;
-  display: grid; place-items: center;
-  background: var(--red-soft); color: var(--red);
-}
-.acc-ico svg { width: 16px; height: 16px; }
-.acc-chev { margin-left: auto; color: var(--ink-3); flex: none; transition: transform 200ms var(--ease); }
-.acc-chev svg { width: 15px; height: 15px; }
-.acc-item.open .acc-chev { transform: rotate(180deg); }
-.acc-body { padding: 0 var(--sp-4) var(--sp-4); font-size: 13px; color: var(--ink-2); line-height: 1.5; }
-.acc-item:not(.open) .acc-body { display: none; }
-.acc-rec {
-  margin-top: var(--sp-3);
-  background: var(--amber-soft); border: 1px solid var(--amber-line);
-  border-radius: 10px; padding: var(--sp-3) var(--sp-4);
-}
-.acc-rec-t {
-  font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
-  text-transform: uppercase; color: var(--amber); margin-bottom: 3px;
-}
 
 /* ---------- Histórico: eixo do hodômetro ---------- */
+.card-hist { padding: var(--sp-4) var(--sp-5); }
+
 .hist { display: flex; flex-direction: column; }
 .hist-row {
   display: grid; grid-template-columns: 74px 18px minmax(0, 1fr) auto;
   column-gap: var(--sp-3); align-items: stretch;
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--line-soft);
 }
+.hist-row:first-child { padding-top: 0; border-top: 0; }
 .hist-odo { text-align: right; padding-top: 1px; display: flex; flex-direction: column; }
 .hist-km {
   font-size: 14.5px; font-weight: 700; letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums; line-height: 1.25;
 }
+.hist-km.sem { color: var(--ink-3); font-weight: 400; }
 .hist-data { font-size: 11px; color: var(--ink-3); font-variant-numeric: tabular-nums; line-height: 1.3; }
 
 .hist-eixo { position: relative; display: flex; justify-content: center; }
-.hist-eixo::before {
-  content: ''; position: absolute; top: 10px; bottom: 0; width: 2px;
+
+/* O eixo vem em dois trechos: ::before sobe atravessando a divisoria ate' a
+   linha anterior, ::after desce ate' a proxima. Assim a divisoria entre
+   registros nao corta o fio, e as pontas (primeira e ultima) ficam limpas. */
+.hist-eixo::before,
+.hist-eixo::after {
+  content: ''; position: absolute; width: 2px;
   left: 50%; transform: translateX(-50%); background: var(--line);
 }
-.hist-row:last-child .hist-eixo::before { display: none; }
+.hist-eixo::before { top: calc(-1 * var(--sp-4)); height: calc(var(--sp-4) + 10px); }
+.hist-eixo::after  { top: 10px; bottom: 0; }
+
+.hist-row:first-child .hist-eixo::before { display: none; }
+.hist-row:last-child  .hist-eixo::after  { display: none; }
 .hist-dot {
   width: 12px; height: 12px; border-radius: 50%; margin-top: 4px; flex: none;
   background: var(--surface); box-shadow: inset 0 0 0 3px var(--svc, var(--ink-3));
@@ -606,19 +568,22 @@ svg { display: block; }
   <div class="body">
     <p class="offline" id="offline">Sem conexão — mostrando o que está salvo neste aparelho.</p>
 
-    <button class="odo" id="odo" type="button">
-      <span class="odo-label">Hodômetro hoje</span>
-      <span class="odo-valor vazio" id="odo-valor">definir km</span>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>
-    </button>
-
     <div class="avisos" id="avisos"></div>
 
     <section class="bloco">
-      <div class="bloco-head"><h2 class="bloco-titulo">Situação do plano</h2></div>
+      <div class="bloco-head">
+        <h2 class="bloco-titulo">Situação do plano</h2>
+        <button class="odo" id="odo" type="button" title="Ajustar a quilometragem atual">
+          <span class="odo-valor" id="odo-valor">—</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>
+        </button>
+      </div>
       <div class="card">
         <div class="sit-bar" id="sit-bar" role="img"></div>
         <div class="sit-legenda" id="sit-legenda"></div>
+        <div class="card-rodape" id="stats-wrap" hidden>
+          <div class="stats" id="stats"></div>
+        </div>
       </div>
     </section>
 
@@ -627,33 +592,15 @@ svg { display: block; }
       <div class="prev-scroll" id="prev-scroll" role="list"></div>
     </section>
 
-    <section class="bloco" id="bloco-stats" hidden>
-      <div class="bloco-head"><h2 class="bloco-titulo">Números</h2></div>
-      <div class="card"><div class="stats" id="stats"></div></div>
-    </section>
-
-    <section class="bloco">
-      <div class="bloco-head"><h2 class="bloco-titulo">Ficha técnica</h2></div>
-      <div class="card">
-        <div class="ficha-grid" id="ficha"></div>
-      </div>
-    </section>
-
-    <section class="bloco">
-      <div class="bloco-head">
-        <h2 class="bloco-titulo">Atenções conhecidas</h2>
-        <span class="bloco-conta" id="cronicos-conta"></span>
-      </div>
-      <div class="acc" id="cronicos"></div>
-    </section>
-
     <section class="bloco">
       <div class="bloco-head">
         <h2 class="bloco-titulo">Histórico</h2>
         <span class="bloco-conta" id="hist-conta"></span>
       </div>
-      <div class="hist" id="hist"></div>
-      <div class="vazio-msg" id="hist-vazio">Nenhum serviço registrado ainda. Toque em <strong>Registrar</strong> para começar.</div>
+      <div class="card card-hist">
+        <div class="hist" id="hist"></div>
+        <div class="vazio-msg" id="hist-vazio">Nenhum serviço registrado ainda. Toque em <strong>Registrar</strong> para começar.</div>
+      </div>
     </section>
   </div>
 </section>
@@ -706,9 +653,9 @@ svg { display: block; }
             <span class="erro-msg" id="e-data">Informe a data.</span>
           </div>
           <div class="campo">
-            <label class="campo-label" for="w-km">Quilometragem</label>
-            <input type="number" id="w-km" class="input" inputmode="numeric" min="0" placeholder="Ex: 86400" required>
-            <span class="erro-msg" id="e-km">Informe a quilometragem.</span>
+            <label class="campo-label" for="w-km">Quilometragem <span class="campo-op">— se a nota trouxer</span></label>
+            <input type="number" id="w-km" class="input" inputmode="numeric" min="0" placeholder="Ex: 86710">
+            <span class="erro-msg" id="e-km">Quilometragem inválida.</span>
           </div>
         </div>
       </div>
@@ -811,14 +758,6 @@ const VEICULOS = {
     nome: 'Renault Kwid',
     detalhe: '2021 · 1.0 12V Flex',
     img: 'assets/kwid.png',
-    ficha: [
-      ['Motor',        'B4D · 999 cm³'],
-      ['Potência',     '66 / 70 cv'],
-      ['Óleo',         '10W40 RN0700'],
-      ['Arrefecimento','Glaceol RX D'],
-      ['Sincronismo',  'Corrente'],
-      ['Combustível',  'Flex'],
-    ],
     plano: {
       'revisao-geral':  { km: 10000, dias: 365,  fonte: 'rede',   nota: 'Revisão programada Renault: 10.000 km ou 12 meses.' },
       'troca-oleo':     { km: 10000, dias: 365,  fonte: 'rede',   nota: 'Óleo e filtro juntos. Especificação RN0700 / ACEA A3-B4.' },
@@ -835,32 +774,6 @@ const VEICULOS = {
       'bateria':        { km: null,  dias: 1460, fonte: 'rede',   nota: 'Não requer manutenção. Trajetos curtos reduzem a carga.' },
       'outro':          { km: null,  dias: null, fonte: null,     nota: null },
     },
-    cronicos: [
-      {
-        titulo: 'Consumo de óleo acima do normal',
-        icone: 'oil',
-        texto: 'O próprio manual admite consumo de até 0,5 L a cada 1.000 km como normal, e há donos relatando bem mais que isso, com casos de motor danificado em baixa quilometragem. O agravante é que a corrente de comando é lubrificada por esse mesmo óleo.',
-        rec: 'Conferir o nível todo mês, com o motor frio e o carro no plano. Passando de 0,5 L por 1.000 km, procurar a oficina antes que vire problema de motor.',
-      },
-      {
-        titulo: 'Freios com resposta fraca',
-        icone: 'brake',
-        texto: 'Queixa recorrente entre os donos, mesmo com o sistema em ordem e depois de muitos quilômetros rodados.',
-        rec: 'Não é defeito do seu carro: o dimensionamento é justo mesmo. Manter pastilha e fluido em dia e aumentar a distância de seguimento.',
-      },
-      {
-        titulo: 'Ruído e vazamento no câmbio',
-        icone: 'wrench',
-        texto: 'Relatos de barulho, vazamento e, em alguns casos, quebra da transmissão manual de 5 marchas.',
-        rec: 'Ao ouvir ruído novo ao engatar, registrar aqui com a data e levar cedo — a diferença entre um reparo e uma troca de câmbio.',
-      },
-      {
-        titulo: 'Vazamento no ar-condicionado',
-        icone: 'wind',
-        texto: 'Uma das mangueiras passa baixa, perto do motor, e pode dobrar e desenvolver um microfuro por onde o gás escapa aos poucos.',
-        rec: 'Se o ar gelar menos a cada ano, suspeitar da mangueira antes de simplesmente recarregar o gás.',
-      },
-    ],
   },
 
   fluo: {
@@ -868,16 +781,6 @@ const VEICULOS = {
     nome: 'Yamaha Fluo 125',
     detalhe: '2023 · ABS Hybrid',
     img: 'assets/fluo.png',
-    ficha: [
-      ['Cilindrada',   '124,9 cm³'],
-      ['Óleo motor',   '0,80 L · 10W-40'],
-      ['Transmissão',  '0,10 L · 10W-40'],
-      ['Vela',         'NGK CR6HSA'],
-      ['Pneu diant.',  '100/90-12'],
-      ['Pneu tras.',   '110/90-12'],
-      ['Bateria',      'YTZ6V · 12 V'],
-      ['Tanque',       '4,2 L'],
-    ],
     plano: {
       'revisao-geral':      { km: 3000,  dias: 180,  fonte: 'manual', nota: 'Verificações a cada 3.000 km ou 6 meses. A partir dos 6.000 km o ciclo se repete a cada 3.000 km.' },
       'troca-oleo':         { km: 3000,  dias: 180,  fonte: 'manual', nota: 'Yamalube 10W-40, API SL+, JASO MA/MB. 0,80 L na troca.' },
@@ -897,26 +800,6 @@ const VEICULOS = {
       'pastilha-freio':     { km: null,  dias: null, fonte: 'manual', nota: 'Trocar sempre que atingirem o limite de desgaste — sem intervalo fixo.' },
       'outro':              { km: null,  dias: null, fonte: null,     nota: null },
     },
-    cronicos: [
-      {
-        titulo: 'Bateria descarrega com a moto parada',
-        icone: 'battery',
-        texto: 'É a queixa nº 1 do modelo, inclusive em motos com poucas centenas de quilômetros. Com o Stop&Start e a chave fora da posição correta, o sistema elétrico segue consumindo. A Yamaha responde que não encontra defeito na bateria nem no sistema de carga — e que moto parada não repõe o que a partida gasta.',
-        rec: 'Desligar a chave por completo ao estacionar e rodar ao menos uma vez por semana. Parada por mais tempo, tirar a bateria ou usar carregador de manutenção.',
-      },
-      {
-        titulo: 'Ruído na suspensão dianteira',
-        icone: 'suspension',
-        texto: 'Relatado por donos já nos primeiros meses de uso, às vezes persistindo depois da troca.',
-        rec: 'Pedir a verificação na revisão dos 6.000 km e registrar aqui, com data, para sustentar a garantia.',
-      },
-      {
-        titulo: 'Manchas no painel',
-        icone: 'panel',
-        texto: 'Aparecem manchas no painel e as concessionárias costumam substituir apenas o protetor, sem resolver a causa.',
-        rec: 'Fotografar assim que aparecer e registrar enquanto estiver na garantia.',
-      },
-    ],
   },
 };
 
@@ -1072,7 +955,9 @@ function toast(msg, ms = 2600, undo = null) {
    PREVISÕES
    ============================================================ */
 function kmRef() {
-  const doHist = estado.registros.length ? Math.max(...estado.registros.map(r => r.mileage)) : 0;
+  // O hodômetro vem dos próprios registros; kmAtual é só um ajuste manual.
+  const comKm = estado.registros.map(r => r.mileage).filter(k => k != null);
+  const doHist = comKm.length ? Math.max(...comKm) : 0;
   return Math.max(estado.kmAtual ?? 0, doHist);
 }
 
@@ -1104,15 +989,18 @@ function calcularPrevisoes() {
     if (!temIv) {
       feitos.push({
         tipo, label: labelServ(tipo), status: 'ok',
-        valor: 'por desgaste', sub: 'último em ' + fmtKm(u.mileage),
+        valor: 'por desgaste',
+        sub: u.mileage != null ? 'último em ' + fmtKm(u.mileage) : 'último em ' + fmtData(u.date),
         pct: 0, pe: 'sem prazo fixo', nota: iv.nota,
       });
       continue;
     }
 
+    // O último registro pode não ter km (nota fiscal sem hodômetro).
+    // Nesse caso a previsão só existe pelo eixo do tempo.
     const uKm = u.mileage;
     const uData = new Date(u.date + 'T00:00:00');
-    const kmVence   = iv.km   != null ? uKm + iv.km : null;
+    const kmVence   = (iv.km != null && uKm != null) ? uKm + iv.km : null;
     const dataVence = iv.dias != null ? new Date(uData.getTime() + iv.dias * 86400000) : null;
 
     const kmFalta   = (kmVence != null && temKm) ? kmVence - km : null;
@@ -1124,9 +1012,19 @@ function calcularPrevisoes() {
 
     // Percentual consumido: o eixo que estiver mais adiantado manda.
     let pct = 0;
-    if (iv.km && temKm)  pct = Math.max(pct, (km - uKm) / iv.km);
-    if (iv.dias)         pct = Math.max(pct, (agora - uData) / (iv.dias * 86400000));
+    if (iv.km && temKm && uKm != null) pct = Math.max(pct, (km - uKm) / iv.km);
+    if (iv.dias)                       pct = Math.max(pct, (agora - uData) / (iv.dias * 86400000));
     pct = Math.max(0, pct);
+
+    // Sem km no registro e sem intervalo por tempo, não há o que prever.
+    if (kmVence == null && dataVence == null) {
+      feitos.push({
+        tipo, label: labelServ(tipo), status: 'ok',
+        valor: 'a cada ' + fmtIntervalo(iv), sub: 'feito em ' + fmtData(u.date),
+        pct: 0, pe: 'sem km no registro', nota: iv.nota,
+      });
+      continue;
+    }
 
     let pe;
     if (status === 'late') {
@@ -1262,14 +1160,14 @@ function renderStats(prev) {
   // A distância do período vai do registro mais antigo até o hodômetro de
   // hoje — não até o último registro. Senão o custo por km fica inflado:
   // divide o gasto inteiro por um pedaço pequeno da distância real.
-  const kms = regs.map(r => r.mileage);
+  const kms = regs.map(r => r.mileage).filter(k => k != null);
   const rodados = kms.length ? Math.max(0, kmRef() - Math.min(...kms)) : 0;
   const custoKm = rodados > 0 && gasto > 0 ? gasto / rodados : null;
 
   const proximo = prev.find(p => p.status !== 'none' && /faltam/.test(p.pe));
 
-  if (regs.length < 2) { $('bloco-stats').hidden = true; return; }
-  $('bloco-stats').hidden = false;
+  if (regs.length < 2) { $('stats-wrap').hidden = true; return; }
+  $('stats-wrap').hidden = false;
 
   const item = (k, ico, v) => `
     <div>
@@ -1283,36 +1181,6 @@ function renderStats(prev) {
     custoKm ? item('Custo por km', 'crosshair', `<small>R$</small> ${custoKm.toFixed(2).replace('.', ',')}`) : '',
     proximo ? item('Próximo serviço', 'spark', esc(proximo.pe.replace('faltam ', ''))) : '',
   ].join('');
-}
-
-/* ---------- Ficha técnica ---------- */
-function renderFicha() {
-  const v = VEICULOS[veiculoAtual];
-  $('ficha').innerHTML = v.ficha.map(([k, val]) => `
-    <div class="ficha-row"><span class="ficha-k">${esc(k)}</span><span class="ficha-v">${esc(val)}</span></div>
-  `).join('');
-}
-
-/* ---------- Problemas crônicos ---------- */
-function renderCronicos() {
-  const v = VEICULOS[veiculoAtual];
-  const lista = v.cronicos || [];
-  $('cronicos-conta').textContent = lista.length ? lista.length + (lista.length === 1 ? ' item' : ' itens') : '';
-  $('cronicos').innerHTML = lista.map((c, i) => `
-    <div class="acc-item" data-i="${i}">
-      <button class="acc-head" type="button" aria-expanded="false">
-        <span class="acc-ico">${svgIco(c.icone)}</span>
-        ${esc(c.titulo)}
-        <span class="acc-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
-      </button>
-      <div class="acc-body">
-        ${esc(c.texto)}
-        <div class="acc-rec">
-          <div class="acc-rec-t">Recomendação</div>
-          ${esc(c.rec)}
-        </div>
-      </div>
-    </div>`).join('');
 }
 
 /* ---------- Histórico ---------- */
@@ -1331,14 +1199,15 @@ function renderHistorico() {
     const prox = regs[i + 1];
     let gap = '';
     if (prox) {
-      const dKm = r.mileage - prox.mileage;
+      // Só dá para medir a distância se os dois registros tiverem km.
+      const dKm = (r.mileage != null && prox.mileage != null) ? r.mileage - prox.mileage : null;
       const dDias = Math.round(
         (new Date(r.date + 'T00:00:00') - new Date(prox.date + 'T00:00:00')) / 86400000
       );
-      if (dKm > 0 || dDias > 0) {
+      if ((dKm != null && dKm > 0) || dDias > 0) {
         const partes = [];
-        if (dKm > 0)   partes.push(`<b>${fmtKm(dKm)}</b> rodados`);
-        if (dDias > 0) partes.push(`em ${fmtDuracao(dDias)}`);
+        if (dKm != null && dKm > 0) partes.push(`<b>${fmtKm(dKm)}</b> rodados`);
+        if (dDias > 0) partes.push(`${dKm != null && dKm > 0 ? 'em' : 'passaram'} ${fmtDuracao(dDias)}`);
         gap = `<div class="hist-gap">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
           <span>${partes.join(' ')}</span>
@@ -1351,7 +1220,7 @@ function renderHistorico() {
     return `
       <div class="hist-row" style="--svc:${corServ(r.type)}">
         <div class="hist-odo">
-          <span class="hist-km">${fmtKmSec(r.mileage)}</span>
+          ${r.mileage != null ? `<span class="hist-km">${fmtKmSec(r.mileage)}</span>` : '<span class="hist-km sem">—</span>'}
           <span class="hist-data">${fmtData(r.date)}</span>
         </div>
         <div class="hist-eixo"><span class="hist-dot"></span></div>
@@ -1383,17 +1252,14 @@ function render() {
   $('head-nome').textContent = v.nome;
   $('head-det').textContent = v.detalhe;
 
-  const km = $('odo-valor');
-  km.textContent = estado.kmAtual != null ? fmtKm(estado.kmAtual) : 'definir km';
-  km.classList.toggle('vazio', estado.kmAtual == null);
+  const ref = kmRef();
+  $('odo-valor').textContent = ref > 0 ? fmtKm(ref) : 'sem km';
 
   const prev = calcularPrevisoes();
   renderSituacao(prev);
   renderPrevisoes(prev);
   renderAvisos(calcularAvisos(prev));
   renderStats(prev);
-  renderFicha();
-  renderCronicos();
   renderHistorico();
 }
 
@@ -1539,6 +1405,8 @@ function fecharWizard() {
 }
 
 function validarPasso2() {
+  // Só a data é obrigatória. Muita nota fiscal não traz o hodômetro,
+  // e exigir o km faria o registro deixar de ser feito.
   const data = $('w-data').value;
   const km = $('w-km').value;
   let ok = true;
@@ -1548,7 +1416,7 @@ function validarPasso2() {
     if (!cond) ok = false;
   };
   set('w-data', 'e-data', !!data);
-  set('w-km', 'e-km', km !== '' && parseInt(km) >= 0);
+  set('w-km', 'e-km', km === '' || parseInt(km) >= 0);
   return ok;
 }
 
@@ -1557,7 +1425,8 @@ async function enviarWizard() {
   if (!validarPasso2()) { irPasso(2); return; }
 
   const custo = parseFloat($('w-custo').value);
-  const km = parseInt($('w-km').value);
+  const kmBruto = parseInt($('w-km').value);
+  const km = isNaN(kmBruto) ? null : kmBruto;
   const dados = {
     type: dadosWiz.type,
     otherLabel: dadosWiz.type === 'outro' ? (dadosWiz.otherLabel || null) : null,
@@ -1574,7 +1443,7 @@ async function enviarWizard() {
   else        { await criarRegistro(dados);            toast('Registro salvo'); }
 
   // O hodômetro não anda para trás.
-  if (estado.kmAtual == null || km > estado.kmAtual) await definirKm(km);
+  if (km != null && (estado.kmAtual == null || km > estado.kmAtual)) await definirKm(km);
 }
 
 /* ============================================================
@@ -1621,14 +1490,6 @@ $('hist').addEventListener('click', e => {
   if (!b) return;
   if (b.dataset.acao === 'editar') abrirWizard(b.dataset.id);
   if (b.dataset.acao === 'excluir') abrirConf(b.dataset.id);
-});
-
-$('cronicos').addEventListener('click', e => {
-  const h = e.target.closest('.acc-head');
-  if (!h) return;
-  const item = h.closest('.acc-item');
-  const aberto = item.classList.toggle('open');
-  h.setAttribute('aria-expanded', aberto ? 'true' : 'false');
 });
 
 $('serv-grid').addEventListener('click', e => {

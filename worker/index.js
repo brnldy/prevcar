@@ -75,7 +75,10 @@ async function tratarApi(request, env, segmentos) {
 
       if (!veiculoValido(veiculo)) return erro('Veículo desconhecido.');
       if (!registro?.id || !registro?.type || !registro?.date) return erro('Registro incompleto.');
-      if (!Number.isFinite(registro.mileage)) return erro('Quilometragem inválida.');
+      // Quilometragem é opcional: muita nota fiscal não traz o hodômetro.
+      if (registro.mileage != null && !Number.isFinite(registro.mileage)) {
+        return erro('Quilometragem inválida.');
+      }
 
       await db.prepare(
         `INSERT OR REPLACE INTO manutencoes
@@ -88,7 +91,7 @@ async function tratarApi(request, env, segmentos) {
         registro.otherLabel ?? null,
         registro.description || null,
         registro.date,
-        registro.mileage,
+        registro.mileage ?? null,
         registro.cost ?? null,
         registro.location || null,
         registro.addedAt || new Date().toISOString()

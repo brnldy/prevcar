@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS manutencoes (
   outro_label    TEXT,
   descricao      TEXT,
   data           TEXT    NOT NULL,
-  quilometragem  INTEGER NOT NULL,
+  quilometragem  INTEGER,          -- opcional: nem toda nota traz o hodômetro
   custo          REAL,
   local          TEXT,
   criado_em      TEXT    NOT NULL
