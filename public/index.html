@@ -140,6 +140,19 @@ svg { display: block; }
 .veic-nome { font-size: 16.5px; font-weight: 700; letter-spacing: -0.02em; }
 .veic-det { font-size: 12px; color: var(--ink-3); }
 .veic-km { font-size: 12.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.veic-km.fraco { color: var(--ink-3); }
+
+/* Enquanto os dados não chegam, o lugar do km fica reservado — sem afirmar
+   um valor que ainda não conhecemos. */
+.veic-km.esqueleto {
+  display: block; width: 84px; height: 12px; margin-top: 3px;
+  border-radius: 4px; background: var(--surface-3);
+  animation: pulsa 1.4s ease-in-out infinite;
+}
+@keyframes pulsa { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+@media (prefers-reduced-motion: reduce) {
+  .veic-km.esqueleto { animation: none; }
+}
 
 /* ============================================================
    CABEÇALHO DO APP
@@ -1379,21 +1392,65 @@ function render() {
 /* ============================================================
    SELETOR
    ============================================================ */
-function renderSeletor() {
+/**
+ * Km de um veículo a partir de um pacote de dados.
+ * Filtra nulos: com a quilometragem opcional, um veículo pode ter só
+ * registros sem hodômetro — e aí Math.max devolveria 0.
+ */
+function kmDoPacote(c) {
+  const comKm = (c.registros || []).map(r => r.mileage).filter(k => k != null);
+  const maior = comKm.length ? Math.max(...comKm) : null;
+  if (c.kmAtual == null && maior == null) return null;
+  return Math.max(c.kmAtual ?? 0, maior ?? 0);
+}
+
+/**
+ * @param {'carregando'|'pronto'|'offline'} fase
+ * Enquanto não sabemos, o seletor não afirma nada: mostra um traço em vez
+ * de "sem km ainda", que já apareceu como mentira num aparelho novo.
+ */
+function renderSeletor(fase = 'pronto') {
   $('pick-list').innerHTML = Object.values(VEICULOS).map(v => {
-    const c = cacheDo(v.id);
-    const km = c.kmAtual != null ? fmtKm(c.kmAtual)
-             : (c.registros?.length ? fmtKm(Math.max(...c.registros.map(r => r.mileage))) : 'sem km ainda');
+    const km = kmDoPacote(cacheDo(v.id));
+    let linha;
+    if (km != null)                 linha = `<span class="veic-km">${fmtKm(km)}</span>`;
+    else if (fase === 'carregando') linha = '<span class="veic-km esqueleto"></span>';
+    else if (fase === 'offline')    linha = '<span class="veic-km fraco">sem conexão</span>';
+    else                            linha = '<span class="veic-km fraco">nenhum serviço registrado</span>';
+
     return `
       <button class="veic-card" type="button" data-v="${v.id}">
         <span class="veic-foto"><img src="${v.img}" alt=""></span>
         <span class="veic-txt">
           <span class="veic-nome">${esc(v.nome)}</span>
           <span class="veic-det">${esc(v.detalhe)}</span>
-          <span class="veic-km">${km}</span>
+          ${linha}
         </span>
       </button>`;
   }).join('');
+}
+
+/** Busca os dois veículos de uma vez, para o seletor mostrar dado real. */
+async function carregarTodos() {
+  const ids = Object.keys(VEICULOS);
+  const res = await Promise.allSettled(
+    ids.map(id => api('/dados?veiculo=' + encodeURIComponent(id)))
+  );
+  let algumOk = false;
+  res.forEach((r, i) => {
+    if (r.status !== 'fulfilled') return;
+    algumOk = true;
+    salvarCache(ids[i], { kmAtual: r.value.kmAtual ?? null, registros: r.value.registros ?? [] });
+  });
+  return algumOk;
+}
+
+async function mostrarSeletor() {
+  const temCache = Object.keys(VEICULOS).some(id => kmDoPacote(cacheDo(id)) != null);
+  renderSeletor(temCache ? 'pronto' : 'carregando');
+  mostrarTela('screen-picker');
+  const ok = await carregarTodos();
+  renderSeletor(ok ? 'pronto' : 'offline');
 }
 
 /* ============================================================
@@ -1624,8 +1681,7 @@ $('pick-list').addEventListener('click', e => {
 $('btn-trocar').addEventListener('click', () => {
   localStorage.removeItem(STORE_VEICULO);
   veiculoAtual = null;
-  renderSeletor();
-  mostrarTela('screen-picker');
+  mostrarSeletor();
 });
 
 $('odo').addEventListener('click', () => {
@@ -1723,11 +1779,10 @@ async function abrirVeiculo(id) {
 
 $('w-data').value = new Date().toISOString().split('T')[0];
 irPasso(1);
-renderSeletor();
 
 const salvo = localStorage.getItem(STORE_VEICULO);
 if (salvo && VEICULOS[salvo]) abrirVeiculo(salvo);
-else mostrarTela('screen-picker');
+else mostrarSeletor();
 </script>
 </body>
 </html>
