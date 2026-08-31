@@ -493,6 +493,15 @@ svg { display: block; }
 .serv-btn:hover { border-color: var(--amber-pure); }
 .serv-btn.sel { background: var(--amber-soft); border-color: var(--amber-pure); }
 
+.serv-btn.escolher { position: relative; }
+.serv-mais {
+  margin-left: auto; flex: none;
+  font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em;
+  color: var(--ink-2); background: var(--surface-2);
+  border: 1px solid var(--line); border-radius: 999px; padding: 2px 7px;
+}
+.serv-btn.escolher.sel .serv-mais { background: var(--surface); border-color: var(--amber-line); }
+
 /* ---------- Seleção múltipla de filtros ---------- */
 .filtros-wrap {
   margin-top: var(--sp-5); display: flex; flex-direction: column; gap: var(--sp-3);
@@ -586,6 +595,55 @@ svg { display: block; }
   border-radius: var(--r-sm); font-variant-numeric: tabular-nums;
 }
 .dialogo-acoes { display: flex; gap: var(--sp-3); margin-top: var(--sp-2); }
+
+/* ---------- Folha de detalhe do serviço ----------
+   As notas dos manuais viviam em atributo title, que não existe no
+   celular. Aqui elas ganham um lugar de verdade, junto da origem do
+   número — que é o que permite discordar dele com base. */
+.folha { align-items: flex-end; padding: 0; }
+.folha-corpo {
+  background: var(--surface); width: 100%; max-width: 560px; margin: 0 auto;
+  border-radius: var(--r-xl) var(--r-xl) 0 0;
+  padding: var(--sp-3) var(--sp-5)
+           max(var(--sp-6), calc(var(--sp-5) + env(safe-area-inset-bottom)));
+  display: flex; flex-direction: column; gap: var(--sp-4);
+  animation: sobe 300ms var(--ease-expo);
+}
+@keyframes sobe { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { .folha-corpo { animation: none; } }
+
+.folha-alca {
+  width: 36px; height: 4px; border-radius: 2px;
+  background: var(--line); margin: 0 auto var(--sp-2);
+}
+
+.det-topo { display: flex; align-items: center; gap: var(--sp-3); }
+.det-ico {
+  width: 40px; height: 40px; border-radius: 11px; flex: none;
+  display: grid; place-items: center;
+}
+.det-ico svg { width: 21px; height: 21px; }
+.det-nome { font-size: 17px; font-weight: 700; letter-spacing: -0.02em; }
+.det-quando { font-size: 13px; color: var(--ink-2); }
+
+.det-linhas {
+  display: flex; flex-direction: column; gap: var(--sp-2);
+  padding: var(--sp-4) 0; border-block: 1px solid var(--line-soft);
+}
+.det-linhas > div { display: flex; justify-content: space-between; gap: var(--sp-4); }
+.det-linhas dt { font-size: 13px; color: var(--ink-3); }
+.det-linhas dd { font-size: 13px; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+
+.det-nota { font-size: 13.5px; color: var(--ink-2); line-height: 1.5; }
+.det-nota:empty { display: none; }
+
+.det-fonte { display: flex; align-items: flex-start; gap: var(--sp-2); font-size: 12px; color: var(--ink-3); line-height: 1.45; }
+.selo {
+  flex: none; font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase; padding: 3px 7px; border-radius: 5px;
+}
+.selo-manual { background: var(--slate-soft); color: var(--slate); }
+.selo-rede   { background: var(--surface-3); color: var(--ink-2); }
 
 /* ============================================================
    TOAST
@@ -789,6 +847,26 @@ svg { display: block; }
 <!-- ============================================================
      CONFIRMAÇÃO DE EXCLUSÃO
      ============================================================ -->
+<div class="overlay folha" id="detalhe" role="dialog" aria-modal="true" aria-labelledby="det-nome">
+  <div class="folha-corpo">
+    <div class="folha-alca" aria-hidden="true"></div>
+    <div class="det-topo">
+      <span class="det-ico" id="det-ico"></span>
+      <div>
+        <p class="det-nome" id="det-nome"></p>
+        <p class="det-quando" id="det-quando"></p>
+      </div>
+    </div>
+    <dl class="det-linhas">
+      <div><dt>Intervalo</dt><dd id="det-intervalo"></dd></div>
+      <div><dt>Último registro</dt><dd id="det-ultimo"></dd></div>
+    </dl>
+    <p class="det-nota" id="det-nota"></p>
+    <div class="det-fonte" id="det-fonte"></div>
+    <button class="btn" id="det-fechar" type="button">Fechar</button>
+  </div>
+</div>
+
 <div class="overlay" id="conf" role="dialog" aria-modal="true" aria-labelledby="conf-t">
   <div class="dialogo">
     <p class="dialogo-t" id="conf-t">Excluir este registro?</p>
@@ -1290,7 +1368,8 @@ function renderPrevisoes(prev) {
       ? '<span class="medidor"></span>'
       : `<span class="medidor"><span class="medidor-fill" style="width:${largura}%"></span></span>`;
     return `
-      <article class="prev" data-s="${p.status}" role="listitem"${p.nota ? ` title="${esc(p.nota)}"` : ''}>
+      <button class="prev" type="button" data-s="${p.status}" data-t="${p.tipo}" role="listitem"
+              aria-label="${esc(p.label)}, ${esc(p.pe)}. Toque para ver o intervalo e a origem.">
         <span class="prev-nome">${esc(p.label)}</span>
         <span class="prev-valor">${esc(p.valor)}</span>
         <span class="prev-sub">${esc(p.sub)}</span>
@@ -1298,7 +1377,7 @@ function renderPrevisoes(prev) {
           ${medidor}
           <span class="prev-pe">${esc(p.pe)}</span>
         </span>
-      </article>`;
+      </button>`;
   }).join('');
 }
 
@@ -1628,10 +1707,16 @@ function montarServicos() {
   const iFiltros = tipos.indexOf('troca-oleo');
   if (filtros.length) tipos.splice(iFiltros >= 0 ? iFiltros + 1 : tipos.length, 0, 'filtros');
 
-  const botao = t => `
-    <button class="serv-btn" type="button" data-t="${t}" style="--svc:${corServ(t)}"${plano[t]?.nota ? ` title="${esc(plano[t].nota)}"` : ''}>
-      ${svgIco(icoServ(t))}<span>${esc(labelServ(t))}</span>
-    </button>`;
+  // "Filtros" abre uma escolha em vez de avançar. Sem a marca, ele parece
+  // igual aos outros e o comportamento diferente pega de surpresa.
+  const botao = t => t === 'filtros'
+    ? `<button class="serv-btn escolher" type="button" data-t="filtros" style="--svc:${corServ(t)}">
+         ${svgIco(icoServ(t))}<span>Filtros</span>
+         <span class="serv-mais" aria-hidden="true">escolher</span>
+       </button>`
+    : `<button class="serv-btn" type="button" data-t="${t}" style="--svc:${corServ(t)}"${plano[t]?.nota ? ` title="${esc(plano[t].nota)}"` : ''}>
+         ${svgIco(icoServ(t))}<span>${esc(labelServ(t))}</span>
+       </button>`;
 
   $('serv-grid').innerHTML = tipos.map(botao).join('');
 
@@ -1739,6 +1824,51 @@ async function enviarWizard() {
 /* ============================================================
    EXCLUSÃO
    ============================================================ */
+/* ---------- Folha de detalhe ---------- */
+function abrirDetalhe(tipo) {
+  const iv = planoDo(veiculoAtual)[tipo];
+  if (!iv) return;
+  const p = calcularPrevisoes().find(x => x.tipo === tipo);
+  const u = ultimoPorTipo(estado.registros)[tipo];
+
+  $('det-ico').innerHTML = svgIco(icoServ(tipo));
+  $('det-ico').style.background = `color-mix(in srgb, ${corServ(tipo)} 16%, var(--surface))`;
+  $('det-ico').style.color = corServ(tipo);
+  $('det-nome').textContent = labelServ(tipo);
+
+  const temIntervalo = iv.km != null || iv.dias != null;
+  $('det-intervalo').textContent = temIntervalo ? 'a cada ' + fmtIntervalo(iv) : 'por desgaste, sem prazo fixo';
+
+  if (u) {
+    $('det-quando').textContent = p ? p.pe : '';
+    const partes = [fmtData(u.date)];
+    if (u.mileage != null) partes.push(fmtKm(u.mileage));
+    if (u.type === 'filtros') partes.push('junto com outros filtros');
+    $('det-ultimo').textContent = partes.join(' · ');
+  } else {
+    // Era isto que o card tracejado não explicava.
+    $('det-quando').textContent = 'Sem previsão ainda';
+    $('det-ultimo').textContent = 'nunca registrado';
+  }
+
+  $('det-nota').textContent = !u && temIntervalo
+    ? `Assim que você registrar este serviço uma vez, o app passa a calcular o próximo. ${iv.nota || ''}`.trim()
+    : (iv.nota || '');
+
+  const manual = iv.fonte === 'manual';
+  $('det-fonte').innerHTML = iv.fonte
+    ? `<span class="selo selo-${iv.fonte}">${manual ? 'manual' : 'rede'}</span>
+       <span>${manual
+          ? 'Número tirado do manual do proprietário.'
+          : 'Número do plano da rede e de oficinas — o manual deste veículo não traz o intervalo.'}</span>`
+    : '';
+
+  $('detalhe').classList.add('on');
+  $('det-fechar').focus();
+}
+
+function fecharDetalhe() { $('detalhe').classList.remove('on'); }
+
 let idExcluir = null;
 
 function abrirConf(id) {
@@ -1831,13 +1961,21 @@ $('wiz-avancar').addEventListener('click', () => {
   else if (passo === 3) enviarWizard();
 });
 
+$('prev-scroll').addEventListener('click', e => {
+  const c = e.target.closest('.prev');
+  if (c) abrirDetalhe(c.dataset.t);
+});
+$('det-fechar').addEventListener('click', fecharDetalhe);
+$('detalhe').addEventListener('click', e => { if (e.target === $('detalhe')) fecharDetalhe(); });
+
 $('conf-nao').addEventListener('click', fecharConf);
 $('conf-sim').addEventListener('click', () => { if (idExcluir) excluirRegistro(idExcluir); fecharConf(); });
 $('conf').addEventListener('click', e => { if (e.target === $('conf')) fecharConf(); });
 
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
-  if ($('conf').classList.contains('on')) fecharConf();
+  if ($('detalhe').classList.contains('on')) fecharDetalhe();
+  else if ($('conf').classList.contains('on')) fecharConf();
   else if ($('wiz').classList.contains('open')) fecharWizard();
 });
 
