@@ -139,6 +139,31 @@ svg { display: block; }
 .veic-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
 .veic-nome { font-size: 16.5px; font-weight: 700; letter-spacing: -0.02em; }
 .veic-det { font-size: 12px; color: var(--ink-3); }
+/* Estado tem cor e forma: o ponto sobrevive à leitura de canto de olho,
+   e o texto continua legível para quem não distingue as cores. */
+/* Km e estado moram na mesma linha: os dois respondem "como ele está
+   agora". Assim o nome do veículo fica com a largura inteira. */
+.veic-estado {
+  display: flex; align-items: center; gap: var(--sp-2);
+  margin-top: 2px; min-width: 0;
+}
+.veic-estado .veic-km { flex: 1; min-width: 0; }
+
+.pilula {
+  flex: none;
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 10px 4px 8px; border-radius: 999px;
+  font-size: 11.5px; font-weight: 600; white-space: nowrap;
+}
+.pilula::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.pilula.vencido { background: var(--red-soft);   color: var(--red); }
+.pilula.perto   { background: var(--amber-soft); color: var(--amber); }
+.pilula.ok      { background: var(--green-soft); color: var(--green); }
+
+@media (max-width: 379px) {
+  .pilula { font-size: 11px; padding: 4px 9px 4px 7px; }
+}
+
 .veic-km { font-size: 12.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
 .veic-km.fraco { color: var(--ink-3); }
 
@@ -1048,6 +1073,65 @@ function kmRef() {
   return Math.max(estado.kmAtual ?? 0, doHist);
 }
 
+/**
+ * Último registro de cada tipo. Um registro "filtros" vale como último
+ * serviço de cada filtro marcado nele, para cada um seguir previsto pelo
+ * seu próprio intervalo.
+ */
+function ultimoPorTipo(registros) {
+  const ultimo = {};
+  for (const r of registros) {
+    if (!ultimo[r.type]) ultimo[r.type] = r;
+    if (r.type === 'filtros') {
+      for (const t of (r.items || [])) if (!ultimo[t]) ultimo[t] = r;
+    }
+  }
+  return ultimo;
+}
+
+/** Regra única de urgência, usada pela tela do veículo e pelo seletor. */
+function statusDe(kmFalta, diasFalta) {
+  if ((kmFalta != null && kmFalta <= 0) || (diasFalta != null && diasFalta <= 0)) return 'late';
+  if ((kmFalta != null && kmFalta <= 1000) || (diasFalta != null && diasFalta <= 30)) return 'soon';
+  return 'ok';
+}
+
+/**
+ * Contagem de vencidos e a vencer de um veículo que não é o aberto —
+ * é o que o seletor precisa para dizer qual dos dois pede atenção.
+ * Devolve null quando ainda não há base para afirmar nada.
+ */
+function resumoDoVeiculo(id) {
+  const c = cacheDo(id);
+  if (!c.registros?.length) return null;
+
+  const plano = planoDo(id);
+  const km = kmDoPacote(c) ?? 0;
+  const agora = new Date();
+  const ultimo = ultimoPorTipo(c.registros);
+
+  let vencidos = 0, aVencer = 0;
+  for (const [tipo, iv] of Object.entries(plano)) {
+    if (tipo === 'outro') continue;
+    const u = ultimo[tipo];
+    if (!u) continue;
+
+    const kmVence = (iv.km != null && u.mileage != null) ? u.mileage + iv.km : null;
+    const dataVence = iv.dias != null
+      ? new Date(new Date(u.date + 'T00:00:00').getTime() + iv.dias * 86400000)
+      : null;
+
+    const kmFalta = (kmVence != null && km > 0) ? kmVence - km : null;
+    const diasFalta = dataVence != null ? Math.round((dataVence - agora) / 86400000) : null;
+    if (kmFalta == null && diasFalta == null) continue;
+
+    const s = statusDe(kmFalta, diasFalta);
+    if (s === 'late') vencidos++;
+    else if (s === 'soon') aVencer++;
+  }
+  return { vencidos, aVencer };
+}
+
 /** Data do registro mais antigo — início do período que os números cobrem. */
 function inicioPeriodo() {
   if (!estado.registros.length) return null;
@@ -1076,15 +1160,7 @@ function calcularPrevisoes() {
   const temKm = km > 0;
   const taxa = kmPorDia();
 
-  // Um registro do tipo "filtros" vale como último serviço de cada filtro
-  // marcado nele — assim cada um segue previsto pelo seu próprio intervalo.
-  const ultimo = {};
-  for (const r of estado.registros) {
-    if (!ultimo[r.type]) ultimo[r.type] = r;
-    if (r.type === 'filtros') {
-      for (const t of (r.items || [])) if (!ultimo[t]) ultimo[t] = r;
-    }
-  }
+  const ultimo = ultimoPorTipo(estado.registros);
 
   const feitos = [];
   const novos = [];
@@ -1122,9 +1198,7 @@ function calcularPrevisoes() {
     const kmFalta   = (kmVence != null && temKm) ? kmVence - km : null;
     const diasFalta = dataVence != null ? Math.round((dataVence - agora) / 86400000) : null;
 
-    let status = 'ok';
-    if ((kmFalta != null && kmFalta <= 0) || (diasFalta != null && diasFalta <= 0)) status = 'late';
-    else if ((kmFalta != null && kmFalta <= 1000) || (diasFalta != null && diasFalta <= 30)) status = 'soon';
+    const status = statusDe(kmFalta, diasFalta);
 
     // Percentual consumido: o eixo que estiver mais adiantado manda.
     let pct = 0;
@@ -1418,13 +1492,20 @@ function renderSeletor(fase = 'pronto') {
     else if (fase === 'offline')    linha = '<span class="veic-km fraco">sem conexão</span>';
     else                            linha = '<span class="veic-km fraco">nenhum serviço registrado</span>';
 
+    // A pílula é o motivo de a tela existir: dizer qual dos dois pede atenção.
+    const r = fase === 'carregando' ? null : resumoDoVeiculo(v.id);
+    let pilula = '';
+    if (r && r.vencidos)      pilula = `<span class="pilula vencido">${r.vencidos} vencido${r.vencidos > 1 ? 's' : ''}</span>`;
+    else if (r && r.aVencer)  pilula = `<span class="pilula perto">${r.aVencer} a vencer</span>`;
+    else if (r)               pilula = '<span class="pilula ok">tudo em dia</span>';
+
     return `
       <button class="veic-card" type="button" data-v="${v.id}">
         <span class="veic-foto"><img src="${v.img}" alt=""></span>
         <span class="veic-txt">
           <span class="veic-nome">${esc(v.nome)}</span>
           <span class="veic-det">${esc(v.detalhe)}</span>
-          ${linha}
+          <span class="veic-estado">${linha}${pilula}</span>
         </span>
       </button>`;
   }).join('');
