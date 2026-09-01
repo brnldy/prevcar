@@ -184,18 +184,21 @@ svg { display: block; }
 
 .veic-1 { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); }
 
-.veic-2 { display: flex; align-items: center; gap: var(--sp-3); margin: var(--sp-3) 0; min-height: 76px; }
-.veic-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.veic-2 { display: flex; align-items: center; gap: var(--sp-2); margin: var(--sp-3) 0; min-height: 96px; }
+.veic-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+
+/* Fluido entre 22 e 30px: dá presença sem estourar em tela de 320px.
+   O nome quebra em marca / modelo, então a caixa não estica na largura. */
 .veic-nome {
-  font-size: var(--t-lg); font-weight: 800;
-  letter-spacing: -0.04em; line-height: 1.08;
+  font-size: clamp(1.375rem, 6.4vw, 1.875rem); font-weight: 800;
+  letter-spacing: -0.045em; line-height: 1.04;
 }
 .veic-det { font-size: var(--t-xs); color: var(--ink-3); }
 
-.veic-foto { width: 124px; height: 82px; flex: none; }
+.veic-foto { width: clamp(112px, 40vw, 158px); height: 104px; flex: none; }
 .veic-foto img {
   width: 100%; height: 100%; object-fit: contain;
-  filter: drop-shadow(0 5px 10px rgb(23 22 19 / 0.22));
+  filter: drop-shadow(0 6px 12px rgb(23 22 19 / 0.24));
 }
 
 /* Faixa 3 — o que vem */
@@ -225,9 +228,29 @@ svg { display: block; }
 .veic-curio svg { width: 14px; height: 14px; flex: none; }
 .veic-curio b { color: var(--ink-2); font-weight: 600; font-variant-numeric: tabular-nums; }
 
-/* Faixa 5 — ação. Preta: âmbar significa atenção, não ação. */
+/* Faixa 5 — ações. Registrar é o caso de 90% e leva o peso; entrar no
+   veículo ganha botão próprio porque tocar o card não era descobrível. */
+.veic-acoes { display: flex; gap: var(--sp-2); margin-top: var(--sp-4); }
+
+.veic-ver {
+  flex: none; display: inline-flex; align-items: center; gap: 5px;
+  padding: 13px var(--sp-4); border-radius: var(--r-md);
+  border: 1px solid var(--line); background: var(--surface);
+  color: var(--ink-2); font-size: var(--t-sm); font-weight: 600;
+  white-space: nowrap;
+  transition: border-color 160ms var(--ease), color 160ms var(--ease), transform 160ms var(--ease);
+}
+.veic-ver svg { width: 14px; height: 14px; }
+.veic-ver:hover { border-color: var(--ink-3); color: var(--ink); }
+.veic-ver:active { transform: scale(0.98); }
+
+@media (max-width: 359px) {
+  .veic-ver { padding-inline: var(--sp-3); }
+}
+
+/* Preta: âmbar significa atenção, não ação. */
 .veic-reg {
-  margin-top: var(--sp-4);
+  flex: 1;
   display: flex; align-items: center; justify-content: center; gap: var(--sp-2);
   padding: 13px; border-radius: var(--r-md);
   background: var(--ink); color: var(--ground);
@@ -444,9 +467,6 @@ svg { display: block; }
 .card-rodape {
   margin-top: var(--sp-5); padding-top: var(--sp-5);
   border-top: 1px solid var(--line-soft);
-}
-.stats-desde {
-  font-size: var(--t-xs); color: var(--ink-3); margin-bottom: var(--sp-4);
 }
 .stats { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-4) var(--sp-5); }
 .stat-k { font-size: var(--t-xs); color: var(--ink-3); display: block; margin-bottom: 3px; }
@@ -850,7 +870,6 @@ svg { display: block; }
         <div class="sit-bar" id="sit-bar" role="img"></div>
         <div class="sit-legenda" id="sit-legenda"></div>
         <div class="card-rodape" id="stats-wrap" hidden>
-          <p class="stats-desde" id="stats-desde"></p>
           <div class="stats" id="stats"></div>
         </div>
       </div>
@@ -1379,12 +1398,6 @@ function curiosidadeDo(c, km, agora) {
   return { icone: 'clock', texto: `último serviço há <b>${fmtDuracao(dias)}</b>` };
 }
 
-/** Data do registro mais antigo — início do período que os números cobrem. */
-function inicioPeriodo() {
-  if (!estado.registros.length) return null;
-  return new Date(estado.registros[estado.registros.length - 1].date + 'T00:00:00');
-}
-
 /**
  * Km rodados por dia, medidos do registro mais antigo com hodômetro até hoje.
  * É a régua que permite comparar "faltam 2.000 km" com "faltam 3 meses" e
@@ -1602,11 +1615,6 @@ function renderStats(prev) {
 
   const proximo = prev.find(p => p.restante);
 
-  const desde = inicioPeriodo();
-  $('stats-desde').textContent = desde
-    ? `Gasto e histórico contam desde ${fmtMesAno(desde).toLowerCase()}`
-    : '';
-
   const item = (k, ico, v) => `
     <div>
       <span class="stat-k">${k}</span>
@@ -1768,6 +1776,11 @@ function renderSeletor(fase = 'pronto') {
          <div class="veic-curio">${svgIco(r.curiosidade.icone)}<span>${r.curiosidade.texto}</span></div>`
       : '';
 
+    // Marca em cima, modelo embaixo — dá presença ao nome sem esticar o card.
+    const corte = v.nome.indexOf(' ');
+    const marca = corte > 0 ? v.nome.slice(0, corte) : v.nome;
+    const modelo = corte > 0 ? v.nome.slice(corte + 1) : '';
+
     return `
       <article class="veic-card" data-v="${v.id}" style="--i:${i}">
         <button class="veic-abrir" type="button" data-v="${v.id}"
@@ -1775,7 +1788,7 @@ function renderSeletor(fase = 'pronto') {
           <span class="veic-1">${pilula}${linha}</span>
           <span class="veic-2">
             <span class="veic-txt">
-              <span class="veic-nome">${esc(v.nome)}</span>
+              <span class="veic-nome">${esc(marca)}<br>${esc(modelo)}</span>
               <span class="veic-det">${esc(v.detalhe)}</span>
             </span>
             <span class="veic-foto"><img src="${v.img}" alt=""></span>
@@ -1783,10 +1796,16 @@ function renderSeletor(fase = 'pronto') {
           ${prox}
           ${curio}
         </button>
-        <button class="veic-reg" type="button" data-reg="${v.id}">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-          Registrar
-        </button>
+        <div class="veic-acoes">
+          <button class="veic-ver" type="button" data-v="${v.id}">
+            Ver veículo
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
+          <button class="veic-reg" type="button" data-reg="${v.id}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            Registrar
+          </button>
+        </div>
       </article>`;
   }).join('');
 }
@@ -2104,7 +2123,8 @@ $('pick-list').addEventListener('click', async e => {
     abrirWizard();
     return;
   }
-  const abrir = e.target.closest('.veic-abrir');
+  // Vale para o corpo do card e para o botão "Ver veículo".
+  const abrir = e.target.closest('[data-v]');
   if (abrir) abrirVeiculo(abrir.dataset.v);
 });
 
