@@ -2015,13 +2015,22 @@ async function enviarWizard() {
     items: dadosWiz.type === 'filtros' ? (dadosWiz.items || []) : [],
   };
 
+  const tipo = dadosWiz.type;
   fecharWizard();
 
-  if (editId) { await atualizarRegistro(editId, dados); toast('Registro atualizado'); }
-  else        { await criarRegistro(dados);            toast('Registro salvo'); }
+  if (editId) await atualizarRegistro(editId, dados);
+  else        await criarRegistro(dados);
 
   // O hodômetro não anda para trás.
   if (km != null && (estado.kmAtual == null || km > estado.kmAtual)) await definirKm(km);
+
+  // Fecha o ciclo: em vez de "salvo", diz o que o registro significa
+  // daqui pra frente. A conta já foi feita — mostrar é de graça.
+  const p = calcularPrevisoes().find(x => x.tipo === tipo);
+  const verbo = editId ? 'atualizado' : 'registrado';
+  toast(p && p.restante && !p.restante.atrasado
+    ? `${labelServ(tipo)} ${verbo}. Próximo em ${p.restante.n} ${p.restante.u}.`
+    : `${labelServ(tipo)} ${verbo}.`);
 }
 
 /* ============================================================
@@ -2142,7 +2151,20 @@ $('serv-grid').addEventListener('click', e => {
     dadosWiz.items = [];
     setTimeout(() => irPasso(2), 180);
   }
+  sugerirOficina(t);
 });
+
+/**
+ * Preenche a oficina com a última onde este serviço foi feito.
+ * Silencioso: se você trocar, fica o que você escreveu. O app lembra
+ * sem avisar que lembrou.
+ */
+function sugerirOficina(tipo) {
+  const campo = $('w-local');
+  if (editId || campo.value.trim()) return;
+  const anterior = estado.registros.find(r => r.type === tipo && r.location);
+  if (anterior) campo.value = anterior.location;
+}
 
 $('filtros-ok').addEventListener('click', () => {
   const marcados = [...$('filtros-lista').querySelectorAll('input:checked')].map(i => i.value);
