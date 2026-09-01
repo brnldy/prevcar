@@ -464,6 +464,13 @@ svg { display: block; }
   border-radius: var(--r-md); padding: var(--sp-4);
   display: flex; flex-direction: column; gap: 3px;
 }
+.prev {
+  text-align: left;
+  transition: transform 180ms var(--ease), box-shadow 180ms var(--ease);
+}
+.prev:hover { box-shadow: 0 4px 14px rgb(23 22 19 / 0.07); }
+.prev:active { transform: scale(0.975); }
+
 .prev[data-s="soon"] { background: var(--amber-soft); border-color: var(--amber-line); }
 .prev[data-s="late"] { background: var(--red-soft); border-color: color-mix(in srgb, var(--red) 32%, transparent); }
 .prev[data-s="none"] { border-style: dashed; background: transparent; }
@@ -492,10 +499,31 @@ svg { display: block; }
 }
 .medidor-fill { display: block; height: 100%; border-radius: 3px; position: relative; }
 /* Só na primeira pintura do veículo. render() roda de novo quando a API
-   responde, e sem esta guarda a barra se preencheria duas vezes. */
-.prev-scroll.revelar .medidor-fill {
+   responde, e sem esta guarda tudo se animaria duas vezes. */
+.body.revelar .medidor-fill {
   animation: revela-medidor 620ms var(--ease-expo) both;
-  animation-delay: calc(140ms + var(--i, 0) * 40ms);
+  animation-delay: calc(260ms + var(--i, 0) * 40ms);
+}
+
+/* Os blocos entram em sequência, de cima para baixo — a mesma ordem em
+   que se lê a página. É o momento orquestrado da tela do veículo. */
+@keyframes sobe-bloco {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.body.revelar > .bloco,
+.body.revelar > .avisos:not(:empty) {
+  animation: sobe-bloco 440ms var(--ease-expo) both;
+}
+.body.revelar > .avisos:not(:empty) { animation-delay: 40ms; }
+.body.revelar > .bloco:nth-of-type(1) { animation-delay: 90ms; }
+.body.revelar > .bloco:nth-of-type(2) { animation-delay: 150ms; }
+.body.revelar > .bloco:nth-of-type(3) { animation-delay: 210ms; }
+
+/* A barra de composição se desenha da esquerda, como o medidor. */
+.body.revelar .sit-seg {
+  animation: revela-medidor 560ms var(--ease-expo) both;
+  animation-delay: calc(300ms + var(--i, 0) * 70ms);
 }
 .medidor-fill::after {
   content: ''; position: absolute; inset: 0;
@@ -674,6 +702,15 @@ svg { display: block; }
 .serv-btn:hover { border-color: var(--amber-pure); }
 .serv-btn.sel { background: var(--amber-soft); border-color: var(--amber-pure); }
 
+/* Ponto discreto no serviço que está vencendo. Não reordena a grade,
+   só ajuda a achar. */
+.serv-alerta {
+  width: 7px; height: 7px; border-radius: 50%; flex: none;
+  background: var(--amber-pure); margin-left: auto;
+}
+.serv-alerta.vencido { background: var(--red-pure); }
+.serv-btn.escolher .serv-alerta { margin-left: auto; margin-right: var(--sp-2); }
+
 .serv-btn.escolher { position: relative; }
 .serv-mais {
   margin-left: auto; flex: none;
@@ -736,6 +773,12 @@ svg { display: block; }
 
 .erro-msg { display: none; font-size: var(--t-xs); color: var(--red); }
 .erro-msg.on { display: block; }
+
+/* Observação, não erro: âmbar de atenção, não vermelho de recusa. */
+.dica-km {
+  display: none; font-size: var(--t-xs); color: var(--amber-forte); line-height: 1.4;
+}
+.dica-km.on { display: block; }
 
 .wiz-pe {
   padding: var(--sp-4);
@@ -906,7 +949,7 @@ svg { display: block; }
     </div>
   </header>
 
-  <div class="body">
+  <div class="body" id="corpo">
     <p class="offline" id="offline">Sem conexão — mostrando o que está salvo neste aparelho.</p>
 
     <div class="avisos" id="avisos"></div>
@@ -1002,6 +1045,7 @@ svg { display: block; }
             <label class="campo-label" for="w-km">Quilometragem <span class="campo-op">— se a nota trouxer</span></label>
             <input type="number" id="w-km" class="input" inputmode="numeric" min="0" placeholder="Ex: 86710">
             <span class="erro-msg" id="e-km">Quilometragem inválida.</span>
+            <span class="dica-km" id="dica-km"></span>
           </div>
         </div>
       </div>
@@ -1583,7 +1627,7 @@ function renderSituacao(prev) {
 
   $('sit-bar').innerHTML = defs
     .filter(([k]) => c[k] > 0)
-    .map(([k, , , cls]) => `<div class="sit-seg ${cls}" style="flex:${c[k]}"></div>`)
+    .map(([k, , , cls], i) => `<div class="sit-seg ${cls}" style="flex:${c[k]};--i:${i}"></div>`)
     .join('');
   $('sit-bar').setAttribute('aria-label',
     defs.filter(([k]) => c[k] > 0).map(([k, nome]) => `${c[k]} ${nome.toLowerCase()}`).join(', '));
@@ -1997,15 +2041,29 @@ function montarServicos() {
   const iFiltros = tipos.indexOf('troca-oleo');
   if (filtros.length) tipos.splice(iFiltros >= 0 ? iFiltros + 1 : tipos.length, 0, 'filtros');
 
+  // Quem abre o wizard costuma vir registrar o que estava vencendo.
+  // A grade não reordena — mexer nas posições confunde quem já decorou —
+  // mas marca quais estão pedindo atenção, para achar mais rápido.
+  const urgencia = {};
+  for (const p of calcularPrevisoes()) {
+    if (p.status === 'late' || p.status === 'soon') urgencia[p.tipo] = p.status;
+  }
+  const filtroUrgente = filtros.some(f => urgencia[f]);
+
+  const marca = st => st
+    ? `<span class="serv-alerta ${st === 'late' ? 'vencido' : ''}" aria-hidden="true"></span>`
+    : '';
+
   // "Filtros" abre uma escolha em vez de avançar. Sem a marca, ele parece
   // igual aos outros e o comportamento diferente pega de surpresa.
   const botao = t => t === 'filtros'
     ? `<button class="serv-btn escolher" type="button" data-t="filtros" style="--svc:${corServ(t)}">
          ${svgIco(icoServ(t))}<span>Filtros</span>
+         ${marca(filtroUrgente ? 'soon' : null)}
          <span class="serv-mais" aria-hidden="true">escolher</span>
        </button>`
     : `<button class="serv-btn" type="button" data-t="${t}" style="--svc:${corServ(t)}"${plano[t]?.nota ? ` title="${esc(plano[t].nota)}"` : ''}>
-         ${svgIco(icoServ(t))}<span>${esc(labelServ(t))}</span>
+         ${svgIco(icoServ(t))}<span>${esc(labelServ(t))}</span>${marca(urgencia[t])}
        </button>`;
 
   $('serv-grid').innerHTML = tipos.map(botao).join('');
@@ -2270,6 +2328,24 @@ $('filtros-lista').addEventListener('change', () => {
   sincronizarFiltros();
 });
 
+/* O hodômetro não anda para trás. Um valor menor que o já registrado
+   corrompe as previsões em silêncio — então o campo avisa. Aviso, não
+   bloqueio: pode ser um serviço antigo sendo lançado agora, e aí o
+   valor menor está certo. */
+$('w-km').addEventListener('input', () => {
+  const dica = $('dica-km');
+  const v = parseInt($('w-km').value, 10);
+  const maior = estado.registros
+    .filter(r => r.id !== editId && r.mileage != null)
+    .reduce((m, r) => Math.max(m, r.mileage), 0);
+
+  const menor = !isNaN(v) && maior > 0 && v < maior;
+  dica.textContent = menor
+    ? `Menor que os ${fmtKm(maior)} já registrados — tudo bem se for um serviço antigo.`
+    : '';
+  dica.classList.toggle('on', menor);
+});
+
 $('outro-ok').addEventListener('click', () => {
   dadosWiz.otherLabel = $('w-outro').value.trim() || null;
   irPasso(2);
@@ -2313,13 +2389,22 @@ async function abrirVeiculo(id) {
   estado = cacheDo(id);      // pinta na hora com o que já temos
   montarServicos();
   render();
-  $('prev-scroll').classList.add('revelar');
   mostrarTela('screen-app');
 
-  await carregar(id);        // e atualiza quando a rede responder
-  $('prev-scroll').classList.remove('revelar');   // sem repetir a revelação
-  render();
+  // A revelação dura o tempo dela, não o tempo da rede: amarrada à
+  // resposta da API, ela era cortada no meio numa conexão rápida.
+  const corpo = $('corpo');
+  corpo.classList.add('revelar');
+  clearTimeout(_revelarTimer);
+  _revelarTimer = setTimeout(() => corpo.classList.remove('revelar'), 1200);
+
+  const antes = JSON.stringify(estado);
+  await carregar(id);
+  // Só repinta se o servidor trouxe algo diferente. Sem isso, a tela era
+  // reconstruída toda vez e a animação recomeçava do zero.
+  if (JSON.stringify(estado) !== antes) render();
 }
+let _revelarTimer = null;
 
 /* O cabeçalho recolhe ao rolar e volta ao topo. Histerese de 20px para
    ele não piscar quando a rolagem para exatamente no limite. */
